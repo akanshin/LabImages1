@@ -63,7 +63,7 @@ public class PixelCIELAB {
 		}
 		else
 		{
-			return x * Math.pow(29.0 / 6.0, 2) / 3.0 + 4.0 / 29.0;
+			return x * Math.pow(29.0 / 6.0, 2.0) / 3.0 + 4.0 / 29.0;
 		}
 	}
 }

@@ -154,6 +154,7 @@ public class ImagePanel extends JPanel
 	public void selectAll() {
 		isPointSelected = false;
 		isSectionSelected = true;
+		selectionChanged = true;
 		selectionX = 0;
 		selectionY = 0;
 		selectionWidth = viewedImage.getWidth();

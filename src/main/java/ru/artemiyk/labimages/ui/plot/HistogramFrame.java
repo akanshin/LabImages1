@@ -131,20 +131,29 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		if (thread3 != null && thread3.getState() == Thread.State.RUNNABLE) {
 			return;
 		}
+		
+
+		final double[] dataset = new double[datasetWidth * datasetHeight];
+		final double[] verticalDataset = new double[datasetWidth * datasetHeight];
+		final double[] horizontalDataset = new double[datasetWidth * datasetHeight];
+		
+		for (int i = 0; i < datasetHeight; i++) {
+			for (int j = 0; j < datasetWidth; j++) {
+				PixelCIELAB cielab = new PixelCIELAB(image.getRGB(x + j, y + i));
+
+				dataset[j + i * datasetWidth] = cielab.getL();
+				verticalDataset[j + i * datasetWidth] = cielab.getA();
+				horizontalDataset[j + i * datasetWidth] = cielab.getB();
+			}
+		}
 
 		thread1 = new Thread() {
 			public void run() {
-				double[] dataset = new double[datasetWidth * datasetHeight];
-				for (int i = 0; i < datasetHeight; i++) {
-					for (int j = 0; j < datasetWidth; j++) {
-						dataset[j + i * datasetWidth] = (new PixelCIELAB(image.getRGB(x + j, y + i))).getL();
-					}
-				}
 				HistogramDataset jfDatasetAll = new HistogramDataset();
 				jfDatasetAll.setType(HistogramType.RELATIVE_FREQUENCY);
-				jfDatasetAll.addSeries(histogramName, dataset, 50, 0.0, 100.0);
-				JFreeChart jfChartAll = ChartFactory.createHistogram(histogramName, xAxisName, yAxisName, jfDatasetAll,
-						PlotOrientation.VERTICAL, true, true, true);
+				jfDatasetAll.addSeries("L", dataset, 50, 0.0, 100.0);
+				JFreeChart jfChartAll = ChartFactory.createHistogram("", "", "", jfDatasetAll, PlotOrientation.VERTICAL,
+						true, true, true);
 
 				Paint[] paintArray = { new Color(0x80ff0000, true) };
 				jfChartAll.getPlot()
@@ -154,33 +163,22 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
 								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
 								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-				
+
 				final XYPlot plot = jfChartAll.getXYPlot();
 				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
 				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
 
-				allPlotPanel.setImage(
-						jfChartAll.createBufferedImage(frameWidth / 3, frameHeight > 50 ? frameHeight - 50 : 0));
+				allPlotPanel.setImage(jfChartAll.createBufferedImage(frameWidth / 3, frameHeight - 35));
 			}
 		};
 
 		thread2 = new Thread() {
 			public void run() {
-				double[] verticalDataset = new double[datasetWidth];
-				for (int i = 0; i < datasetHeight; i++) {
-					for (int j = 0; j < datasetWidth; j++) {
-						verticalDataset[j] += (new PixelCIELAB(image.getRGB(x + j, y + i))).getL();
-					}
-				}
-				for (int j = 0; j < datasetWidth; j++) {
-					verticalDataset[j] /= (double) datasetHeight;
-				}
-
 				HistogramDataset jfDatasetVertical = new HistogramDataset();
 				jfDatasetVertical.setType(HistogramType.RELATIVE_FREQUENCY);
-				jfDatasetVertical.addSeries(histogramName, verticalDataset, 50, 0.0, 100.0);
-				JFreeChart jfChartVertical = ChartFactory.createHistogram(histogramName + " (vertical)", xAxisName,
-						yAxisName, jfDatasetVertical, PlotOrientation.VERTICAL, true, true, false);
+				jfDatasetVertical.addSeries("A", verticalDataset, 50, -128.0, 128.0);
+				JFreeChart jfChartVertical = ChartFactory.createHistogram("", "", "", jfDatasetVertical,
+						PlotOrientation.VERTICAL, true, true, false);
 
 				Paint[] paintArray = { new Color(0x8000ff00, true) };
 				jfChartVertical.getPlot()
@@ -190,33 +188,22 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
 								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
 								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-				
+
 				final XYPlot plot = jfChartVertical.getXYPlot();
 				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
 				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
 
-				verticalPlotPanel.setImage(
-						jfChartVertical.createBufferedImage(frameWidth / 3, frameHeight > 50 ? frameHeight - 50 : 0));
+				verticalPlotPanel.setImage(jfChartVertical.createBufferedImage(frameWidth / 3, frameHeight - 35));
 			}
 		};
 
 		thread3 = new Thread() {
 			public void run() {
-				double[] horizontalDataset = new double[datasetHeight];
-				for (int i = 0; i < datasetHeight; i++) {
-					for (int j = 0; j < datasetWidth; j++) {
-						horizontalDataset[i] += (new PixelCIELAB(image.getRGB(x + j, y + i))).getL();
-					}
-				}
-				for (int i = 0; i < datasetHeight; i++) {
-					horizontalDataset[i] /= (double) datasetWidth;
-				}
-
 				HistogramDataset jfDatasetHorizontal = new HistogramDataset();
 				jfDatasetHorizontal.setType(HistogramType.RELATIVE_FREQUENCY);
-				jfDatasetHorizontal.addSeries(histogramName, horizontalDataset, 50, 0.0, 100.0);
-				JFreeChart jfChartHorizontal = ChartFactory.createHistogram(histogramName + " (horizontal)", xAxisName,
-						yAxisName, jfDatasetHorizontal, PlotOrientation.VERTICAL, true, true, false);
+				jfDatasetHorizontal.addSeries("B", horizontalDataset, 50, -128.0, 128.0);
+				JFreeChart jfChartHorizontal = ChartFactory.createHistogram("", "", "", jfDatasetHorizontal,
+						PlotOrientation.VERTICAL, true, true, false);
 
 				Paint[] paintArray = { new Color(0x800000ff, true) };
 				jfChartHorizontal.getPlot()
@@ -226,13 +213,12 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
 								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
 								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-				
+
 				final XYPlot plot = jfChartHorizontal.getXYPlot();
 				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
 				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
 
-				horizontalPlotPanel.setImage(
-						jfChartHorizontal.createBufferedImage(frameWidth / 3, frameHeight > 50 ? frameHeight - 50 : 0));
+				horizontalPlotPanel.setImage(jfChartHorizontal.createBufferedImage(frameWidth / 3, frameHeight - 35));
 			}
 		};
 
