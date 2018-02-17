@@ -57,7 +57,7 @@ public class PixelCIELAB {
 		return b;
 	}
 	
-	private double f(double x) {
+	private static double f(double x) {
 		if (x > Math.pow(6.0 / 29.0, 3)) {
 			return Math.pow(x, 1.0 / 3.0);
 		}
@@ -65,5 +65,23 @@ public class PixelCIELAB {
 		{
 			return x * Math.pow(29.0 / 6.0, 2.0) / 3.0 + 4.0 / 29.0;
 		}
+	}
+	
+	public static double[] getLAB(int rgb) {
+		double red = (double) ((rgb & 0x00ff0000) >> 16) / 255.0;
+		double green = (double) ((rgb & 0x0000ff00) >> 8) / 255.0;
+		double blue = (double) (rgb & 0x000000ff) / 255.0;
+		
+		double x = mM[0][0] * red + mM[0][1] * green + mM[0][2] * blue;
+		double y = mM[1][0] * red + mM[1][1] * green + mM[1][2] * blue;
+		double z = mM[2][0] * red + mM[2][1] * green + mM[2][2] * blue;
+		
+		double[] lab = new double[3];
+		
+		lab[0] = 116.0 * f(y / yn) - 16.0;
+		lab[1] = 500.0 * (f(x / xn) - f(y / yn));
+		lab[2] = 200.0 * (f(y / yn) - f(z / zn));
+		
+		return lab;
 	}
 }

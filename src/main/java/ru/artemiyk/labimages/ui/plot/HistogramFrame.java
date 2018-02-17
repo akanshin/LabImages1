@@ -10,6 +10,14 @@ import java.awt.Paint;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -131,21 +139,49 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		if (thread3 != null && thread3.getState() == Thread.State.RUNNABLE) {
 			return;
 		}
-		
+
+		ExecutorService threadPool = Executors.newFixedThreadPool(8);
+
+		long startPoint = System.currentTimeMillis();
 
 		final double[] dataset = new double[datasetWidth * datasetHeight];
 		final double[] verticalDataset = new double[datasetWidth * datasetHeight];
 		final double[] horizontalDataset = new double[datasetWidth * datasetHeight];
-		
-		for (int i = 0; i < datasetHeight; i++) {
-			for (int j = 0; j < datasetWidth; j++) {
-				PixelCIELAB cielab = new PixelCIELAB(image.getRGB(x + j, y + i));
 
-				dataset[j + i * datasetWidth] = cielab.getL();
-				verticalDataset[j + i * datasetWidth] = cielab.getA();
-				horizontalDataset[j + i * datasetWidth] = cielab.getB();
+		List<Future<Void>> futureList = new ArrayList<>();
+		for (int i = 0; i < datasetHeight; i++) {
+			final int iClone = i;
+
+			Supplier<Void> supplier = new Supplier<Void>() {
+				public int ii = iClone;
+				@Override
+				public Void get() {
+					for (int j = 0; j < datasetWidth; j++) {
+						double[] lab =  PixelCIELAB.getLAB(image.getRGB(x + j, y + ii));
+						int index = j + ii * datasetWidth;
+						dataset[index] = lab[0];
+						verticalDataset[index] = lab[1];
+						horizontalDataset[index] = lab[2];
+					}
+					return null;
+				}
+			};
+
+			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
+
+		}
+
+		for (Future<Void> future : futureList) {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+
 			}
 		}
+
+		threadPool.shutdown();
+		
+		long collectPoint = System.currentTimeMillis();
 
 		thread1 = new Thread() {
 			public void run() {
@@ -233,8 +269,13 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		} catch (InterruptedException e) {
 
 		}
+		
+		long plotPoint = System.currentTimeMillis();
+		
+		System.out.println(String.format("collect: %d\tplot: %d", collectPoint - startPoint, plotPoint - collectPoint));
 
 		this.setVisible(true);
+		System.gc();
 	}
 
 	public void setDataset(BufferedImage image, int x, int y, int datasetWidth, int datasetHeight) {

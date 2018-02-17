@@ -26,6 +26,7 @@ public class LabImages {
 		this.window = new MainWindow("LabImages 1", 1280, 720);
 		this.window.setVisible(true);
 		this.window.getImagePanel().loadImage(new File(getClass().getClassLoader().getResource("lenna.png").getFile()));
+		//this.window.getImagePanel().loadImage(new File("D:\\artemiyk\\alokha\\Комп.зрение\\66125.jpg"));
 	}
 
 	public static LabImages getInstance() {
