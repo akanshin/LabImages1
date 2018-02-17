@@ -1,6 +1,7 @@
 package ru.artemiyk.labimages.ui.transformator;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -66,8 +67,9 @@ public class HSVTranformatorDialog extends JDialog {
 			int imageX = panelWidth / 2 - imageWidth / 2;
 			int imageY = panelHeight / 2 - imageHeight / 2;
 
-			g2d.setColor(this.getBackground());
-			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+//			g2d.setColor(this.getBackground());
+//			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+			g2d.clearRect(0, 0, this.getWidth(), this.getHeight());
 			g2d.drawImage(image, imageX, imageY, imageWidth, imageHeight, this);
 		}
 
@@ -87,12 +89,14 @@ public class HSVTranformatorDialog extends JDialog {
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(null);
+		contentPanel.setBackground(Color.WHITE);
 
 		imagePanel = new ImagePanel();
 		imagePanel.setBounds(10, 10, 160, 160);
 		contentPanel.add(imagePanel);
 
 		hueSlider = new JSlider();
+		hueSlider.setBackground(Color.WHITE);
 		hueSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent arg0) {
 				hueShift = hueSlider.getValue();
@@ -120,6 +124,7 @@ public class HSVTranformatorDialog extends JDialog {
 		contentPanel.add(saturationLabel);
 
 		saturationSlider = new JSlider();
+		saturationSlider.setBackground(Color.WHITE);
 		saturationSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				satShift = saturationSlider.getValue();
@@ -142,6 +147,7 @@ public class HSVTranformatorDialog extends JDialog {
 		contentPanel.add(valueLabel);
 
 		valueSlider = new JSlider();
+		valueSlider.setBackground(Color.WHITE);
 		valueSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				valShift = valueSlider.getValue();
@@ -164,6 +170,7 @@ public class HSVTranformatorDialog extends JDialog {
 		contentPanel.add(lblPreview);
 
 		hueSpinner = new JSpinner();
+		hueSpinner.setBackground(Color.WHITE);
 		hueSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				hueShift = (Integer) hueSpinner.getValue();
@@ -177,6 +184,7 @@ public class HSVTranformatorDialog extends JDialog {
 		hueSpinner.setBounds(390, 29, 82, 26);
 		contentPanel.add(hueSpinner);
 		JButton hueDefaultButton = new JButton();
+		hueDefaultButton.setBackground(Color.WHITE);
 		hueDefaultButton.setToolTipText("Set zero");
 		hueDefaultButton.setBounds(475, 29, 26, 26);
 		hueDefaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
@@ -191,6 +199,7 @@ public class HSVTranformatorDialog extends JDialog {
 		});
 
 		saturationSpinner = new JSpinner();
+		saturationSpinner.setBackground(Color.WHITE);
 		saturationSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				satShift = (Integer) saturationSpinner.getValue();
@@ -204,6 +213,7 @@ public class HSVTranformatorDialog extends JDialog {
 		saturationSpinner.setBounds(392, 85, 80, 26);
 		contentPanel.add(saturationSpinner);
 		JButton satDefaultButton = new JButton();
+		satDefaultButton.setBackground(Color.WHITE);
 		satDefaultButton.setToolTipText("Set zero");
 		satDefaultButton.setBounds(475, 85, 26, 26);
 		satDefaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
@@ -218,6 +228,7 @@ public class HSVTranformatorDialog extends JDialog {
 		});
 
 		valueSpinner = new JSpinner();
+		valueSpinner.setBackground(Color.WHITE);
 		valueSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				valShift = (Integer) valueSpinner.getValue();
@@ -231,6 +242,7 @@ public class HSVTranformatorDialog extends JDialog {
 		valueSpinner.setBounds(390, 141, 82, 27);
 		contentPanel.add(valueSpinner);
 		JButton valDefaultButton = new JButton();
+		valDefaultButton.setBackground(Color.WHITE);
 		valDefaultButton.setToolTipText("Set zero");
 		valDefaultButton.setBounds(475, 141, 26, 26);
 		valDefaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
@@ -245,15 +257,18 @@ public class HSVTranformatorDialog extends JDialog {
 		});
 
 		progressBar = new JProgressBar();
+		progressBar.setBackground(Color.WHITE);
 		progressBar.setBounds(10, 186, 462, 14);
 		progressBar.setVisible(false);
 		contentPanel.add(progressBar);
 
 		JPanel buttonPane = new JPanel();
+		buttonPane.setBackground(Color.WHITE);
 		buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		getContentPane().add(buttonPane, BorderLayout.SOUTH);
 
 		JButton okButton = new JButton("OK");
+		okButton.setBackground(Color.WHITE);
 		okButton.setActionCommand("OK");
 		buttonPane.add(okButton);
 		getRootPane().setDefaultButton(okButton);
@@ -264,6 +279,7 @@ public class HSVTranformatorDialog extends JDialog {
 		});
 
 		JButton cancelButton = new JButton("Cancel");
+		cancelButton.setBackground(Color.WHITE);
 		cancelButton.setActionCommand("Cancel");
 		buttonPane.add(cancelButton);
 		cancelButton.addActionListener(new ActionListener() {
