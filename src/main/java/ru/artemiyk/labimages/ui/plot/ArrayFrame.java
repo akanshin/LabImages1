@@ -37,12 +37,12 @@ public class ArrayFrame extends JFrame implements ComponentListener {
 		setContentPane(contentPane);
 
 		JToolBar toolBar = new JToolBar();
-		toolBar.setBackground(Color.WHITE);
+		//toolBar.setBackground(Color.WHITE);
 		toolBar.setFloatable(false);
 		contentPane.add(toolBar, BorderLayout.NORTH);
 
 		rgbRadioButton = new JRadioButton("RGB");
-		rgbRadioButton.setBackground(Color.WHITE);
+		//rgbRadioButton.setBackground(Color.WHITE);
 		rgbRadioButton.setSelected(true);
 		rgbRadioButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -52,7 +52,7 @@ public class ArrayFrame extends JFrame implements ComponentListener {
 		toolBar.add(rgbRadioButton);
 
 		hsvRadioButton = new JRadioButton("HSV");
-		hsvRadioButton.setBackground(Color.WHITE);
+		//hsvRadioButton.setBackground(Color.WHITE);
 		hsvRadioButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				arrayPanel.setDrawableInfo(ArrayPanel.EDrawableInfo.eHSV);
@@ -61,7 +61,7 @@ public class ArrayFrame extends JFrame implements ComponentListener {
 		toolBar.add(hsvRadioButton);
 
 		labRadioButton = new JRadioButton("LAB");
-		labRadioButton.setBackground(Color.WHITE);
+		//labRadioButton.setBackground(Color.WHITE);
 		labRadioButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				arrayPanel.setDrawableInfo(ArrayPanel.EDrawableInfo.eLAB);

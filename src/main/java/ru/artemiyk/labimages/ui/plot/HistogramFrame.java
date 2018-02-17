@@ -2,6 +2,7 @@ package ru.artemiyk.labimages.ui.plot;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -102,6 +103,7 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 
 	public HistogramFrame() {
 		this.setBounds(0, 0, frameWidth, frameHeight);
+		this.setMinimumSize(new Dimension(frameWidth, frameHeight));
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 		allPlotPanel = new PlotPanel();

@@ -88,10 +88,10 @@ public class MainWindow extends JFrame {
 	private void buildToolBar() {
 		toolBar = new JToolBar();
 		toolBar.setFloatable(false);
-		toolBar.setBackground(Color.WHITE);
+		//toolBar.setBackground(Color.WHITE);
 		
 		openButton = new JButton();
-		openButton.setBackground(Color.WHITE);
+		//openButton.setBackground(Color.WHITE);
 		openButton.setToolTipText("Open image");
 		toolBar.add(openButton);
 		openButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("open.png")));
@@ -104,7 +104,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		defaultViewButton = new JButton();
-		defaultViewButton.setBackground(Color.WHITE);
+		//defaultViewButton.setBackground(Color.WHITE);
 		defaultViewButton.setToolTipText("Default scale");
 		toolBar.add(defaultViewButton);
 		defaultViewButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("default_view.png")));
@@ -115,7 +115,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		expandButton = new JButton();
-		expandButton.setBackground(Color.WHITE);
+		//expandButton.setBackground(Color.WHITE);
 		expandButton.setToolTipText("Scale to window");
 		toolBar.add(expandButton);
 		expandButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("expand.png")));
@@ -128,7 +128,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		selectAllButton = new JButton();
-		selectAllButton.setBackground(Color.WHITE);
+		//selectAllButton.setBackground(Color.WHITE);
 		selectAllButton.setToolTipText("Select all");
 		toolBar.add(selectAllButton);
 		selectAllButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("select.png")));
@@ -139,7 +139,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		showMassiveButton = new JButton();
-		showMassiveButton.setBackground(Color.WHITE);
+		//showMassiveButton.setBackground(Color.WHITE);
 		showMassiveButton.setToolTipText("Show massive");
 		toolBar.add(showMassiveButton);
 		showMassiveButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("show_rgb.png")));
@@ -150,7 +150,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		showHistButton = new JButton();
-		showHistButton.setBackground(Color.WHITE);
+		//showHistButton.setBackground(Color.WHITE);
 		showHistButton.setToolTipText("Show histogram");
 		toolBar.add(showHistButton);
 		showHistButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hist.png")));
@@ -163,7 +163,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		changeHSVButton = new JButton();
-		changeHSVButton.setBackground(Color.WHITE);
+		//changeHSVButton.setBackground(Color.WHITE);
 		changeHSVButton.setToolTipText("Change HSV");
 		toolBar.add(changeHSVButton);
 		changeHSVButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hsv.png")));
@@ -175,7 +175,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		setDefaultImageButton = new JButton();
-		setDefaultImageButton.setBackground(Color.WHITE);
+		//setDefaultImageButton.setBackground(Color.WHITE);
 		setDefaultImageButton.setToolTipText("Default HSV");
 		toolBar.add(setDefaultImageButton);
 		setDefaultImageButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("set_default.png")));
@@ -188,7 +188,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		questionButton = new JButton();
-		questionButton.setBackground(Color.WHITE);
+		//questionButton.setBackground(Color.WHITE);
 		questionButton.setToolTipText("If you don't know what to do, click!");
 		toolBar.add(questionButton);
 		questionButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("question.png")));
