@@ -112,7 +112,7 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 	public HistogramFrame() {
 		this.setBounds(0, 0, frameWidth, frameHeight);
 		this.setMinimumSize(new Dimension(frameWidth, frameHeight));
-		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 
 		allPlotPanel = new PlotPanel();
 		verticalPlotPanel = new PlotPanel();
@@ -140,14 +140,12 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 			return;
 		}
 
-		ExecutorService threadPool = Executors.newFixedThreadPool(8);
-
-		long startPoint = System.currentTimeMillis();
-
 		final double[] dataset = new double[datasetWidth * datasetHeight];
 		final double[] verticalDataset = new double[datasetWidth * datasetHeight];
 		final double[] horizontalDataset = new double[datasetWidth * datasetHeight];
 
+		ExecutorService threadPool = Executors.newFixedThreadPool(8);
+		
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < datasetHeight; i++) {
 			final int iClone = i;
@@ -180,8 +178,6 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		}
 
 		threadPool.shutdown();
-		
-		long collectPoint = System.currentTimeMillis();
 
 		thread1 = new Thread() {
 			public void run() {
@@ -269,13 +265,8 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		} catch (InterruptedException e) {
 
 		}
-		
-		long plotPoint = System.currentTimeMillis();
-		
-		System.out.println(String.format("collect: %d\tplot: %d", collectPoint - startPoint, plotPoint - collectPoint));
 
 		this.setVisible(true);
-		System.gc();
 	}
 
 	public void setDataset(BufferedImage image, int x, int y, int datasetWidth, int datasetHeight) {
