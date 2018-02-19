@@ -49,6 +49,12 @@ public class ImagePanel extends JPanel
 
 	private HistogramFrame histogram;
 	private ArrayFrame array;
+	
+	private BufferedImage histPrevImage;
+	private int histPrevX;
+	private int histPrevY;
+	private int histPrevWidth;
+	private int histPrevHeight;
 
 	private enum EAction {
 		eMove, eSelect, eTouch, eNoAction
@@ -551,11 +557,24 @@ public class ImagePanel extends JPanel
 		if (histogram == null) {
 			histogram = new HistogramFrame();
 		}
+		
+		if (histPrevImage == viewedImage
+				&& histPrevX == x
+				&& histPrevY == y
+				&& histPrevWidth == width
+				&& histPrevHeight == height
+				&& histogram.isVisible()) {
+			return;
+		}
 
-		histogram.setHistogramName("L");
-		histogram.setBins(10);
 		histogram.setDataset(viewedImage, x, y, width, height);
 		histogram.showHistogram();
+		
+		histPrevImage = viewedImage;
+		histPrevX = x;
+		histPrevY = y;
+		histPrevWidth = width;
+		histPrevHeight = height;
 	}
 
 	public void setImage(BufferedImage newImage) {

@@ -21,7 +21,9 @@ import java.util.function.Supplier;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -40,20 +42,24 @@ import ru.artemiyk.labimages.pixelutils.PixelCIELAB;
 public class HistogramFrame extends JFrame implements ComponentListener {
 	private static final long serialVersionUID = 1L;
 
-	private String histogramName;
-	private String xAxisName;
-	private String yAxisName;
 	private int bins = 100;
 	private BufferedImage image;
 	private int x, y;
 	private int datasetWidth, datasetHeight;
 
-	private PlotPanel verticalPlotPanel;
-	private PlotPanel horizontalPlotPanel;
-	private PlotPanel allPlotPanel;
+	private double[] datasetL;
+	private double[] datasetA;
+	private double[] datasetB;
 
-	private int frameWidth = 900;
-	private int frameHeight = 350;
+	private PlotPanel plotPanelL;
+	private PlotPanel plotPanelA;
+	private PlotPanel plotPanelB;
+
+	private JSlider binsSlider;
+	private boolean isNeedToCollectDatasets = true;
+
+	private int frameWidth = 950;
+	private int frameHeight = 390;
 
 	private Thread thread1, thread2, thread3;
 
@@ -63,6 +69,7 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		private Image image;
 
 		public void setImage(Image image) {
+			this.image = null;
 			this.image = image;
 			this.repaint();
 		}
@@ -114,19 +121,31 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		this.setMinimumSize(new Dimension(frameWidth, frameHeight));
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 
-		allPlotPanel = new PlotPanel();
-		verticalPlotPanel = new PlotPanel();
-		horizontalPlotPanel = new PlotPanel();
+		plotPanelL = new PlotPanel();
+		plotPanelA = new PlotPanel();
+		plotPanelB = new PlotPanel();
 
 		JPanel plotPanels = new JPanel(new GridLayout(0, 3, 0, 0));
-		plotPanels.add(allPlotPanel);
-		plotPanels.add(verticalPlotPanel);
-		plotPanels.add(horizontalPlotPanel);
+		plotPanels.add(plotPanelL);
+		plotPanels.add(plotPanelA);
+		plotPanels.add(plotPanelB);
 
-		JScrollPane scrollPane = new JScrollPane(plotPanels, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		this.getContentPane().setLayout(new BorderLayout());
-		this.getContentPane().add(scrollPane, BorderLayout.CENTER);
+		this.getContentPane().add(plotPanels, BorderLayout.CENTER);
+
+		binsSlider = new JSlider(JSlider.HORIZONTAL, 10, 100, 50);
+		binsSlider.setBackground(Color.WHITE);
+		binsSlider.setMajorTickSpacing(10);
+		binsSlider.setPaintTicks(true);
+		binsSlider.setMinorTickSpacing(2);
+		binsSlider.setPaintLabels(true);
+		binsSlider.setSnapToTicks(true);
+		binsSlider.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				updateBins();
+			}
+		});
+		this.getContentPane().add(binsSlider, BorderLayout.SOUTH);
 	}
 
 	public void showHistogram() {
@@ -140,26 +159,133 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 			return;
 		}
 
-		final double[] dataset = new double[datasetWidth * datasetHeight];
-		final double[] verticalDataset = new double[datasetWidth * datasetHeight];
-		final double[] horizontalDataset = new double[datasetWidth * datasetHeight];
+		if (isNeedToCollectDatasets) {
+			fillDataset();
+		} else {
+			isNeedToCollectDatasets = true;
+		}
 
-		ExecutorService threadPool = Executors.newFixedThreadPool(8);
-		
+		thread1 = new Thread() {
+			public void run() {
+				if (datasetL == null) {
+					return;
+				}
+				
+				HistogramDataset jfDatasetL = new HistogramDataset();
+				jfDatasetL.setType(HistogramType.RELATIVE_FREQUENCY);
+				jfDatasetL.addSeries("L", datasetL, bins, 0.0, 100.0);
+				JFreeChart jfChartL = ChartFactory.createHistogram("", "", "", jfDatasetL, PlotOrientation.VERTICAL,
+						true, true, true);
+
+				Paint[] paintArray = { new Color(0x80ff0000, true) };
+				jfChartL.getPlot()
+						.setDrawingSupplier(new DefaultDrawingSupplier(paintArray,
+								DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
+
+				final XYPlot plot = jfChartL.getXYPlot();
+				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
+				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
+
+				plotPanelL.setImage(jfChartL.createBufferedImage(300, 300));
+			}
+		};
+
+		thread2 = new Thread() {
+			public void run() {
+				if (datasetA == null) {
+					return;
+				}
+				
+				HistogramDataset jfDatasetA = new HistogramDataset();
+				jfDatasetA.setType(HistogramType.RELATIVE_FREQUENCY);
+				jfDatasetA.addSeries("A", datasetA, bins, -128.0, 128.0);
+				JFreeChart jfChartA = ChartFactory.createHistogram("", "", "", jfDatasetA,
+						PlotOrientation.VERTICAL, true, true, false);
+
+				Paint[] paintArray = { new Color(0x8000ff00, true) };
+				jfChartA.getPlot()
+						.setDrawingSupplier(new DefaultDrawingSupplier(paintArray,
+								DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
+
+				final XYPlot plot = jfChartA.getXYPlot();
+				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
+				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
+
+				plotPanelA.setImage(jfChartA.createBufferedImage(300, 300));
+			}
+		};
+
+		thread3 = new Thread() {
+			public void run() {
+				if (datasetB == null) {
+					return;
+				}
+				
+				HistogramDataset jfDatasetB = new HistogramDataset();
+				jfDatasetB.setType(HistogramType.RELATIVE_FREQUENCY);
+				jfDatasetB.addSeries("B", datasetB, bins, -128.0, 128.0);
+				JFreeChart jfChartB = ChartFactory.createHistogram("", "", "", jfDatasetB,
+						PlotOrientation.VERTICAL, true, true, false);
+
+				Paint[] paintArray = { new Color(0x800000ff, true) };
+				jfChartB.getPlot()
+						.setDrawingSupplier(new DefaultDrawingSupplier(paintArray,
+								DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
+
+				final XYPlot plot = jfChartB.getXYPlot();
+				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
+				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
+
+				plotPanelB.setImage(jfChartB.createBufferedImage(300, 300));
+			}
+		};
+
+		thread1.start();
+		thread2.start();
+		thread3.start();
+
+		try {
+			thread1.join();
+			thread2.join();
+			thread3.join();
+		} catch (InterruptedException e) {
+
+		}
+
+		this.setVisible(true);
+	}
+	
+	private void fillDataset() {
+		ExecutorService threadPool = Executors.newFixedThreadPool(16);
+
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < datasetHeight; i++) {
 			final int iClone = i;
 
 			Supplier<Void> supplier = new Supplier<Void>() {
 				public int ii = iClone;
+
 				@Override
 				public Void get() {
+					double[] lab = new double[3];
 					for (int j = 0; j < datasetWidth; j++) {
-						double[] lab =  PixelCIELAB.getLAB(image.getRGB(x + j, y + ii));
+						PixelCIELAB.getLAB(image.getRGB(x + j, y + ii), lab);
 						int index = j + ii * datasetWidth;
-						dataset[index] = lab[0];
-						verticalDataset[index] = lab[1];
-						horizontalDataset[index] = lab[2];
+						datasetL[index] = lab[0];
+						datasetA[index] = lab[1];
+						datasetB[index] = lab[2];
 					}
 					return null;
 				}
@@ -178,127 +304,27 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		}
 
 		threadPool.shutdown();
-
-		thread1 = new Thread() {
-			public void run() {
-				HistogramDataset jfDatasetAll = new HistogramDataset();
-				jfDatasetAll.setType(HistogramType.RELATIVE_FREQUENCY);
-				jfDatasetAll.addSeries("L", dataset, 50, 0.0, 100.0);
-				JFreeChart jfChartAll = ChartFactory.createHistogram("", "", "", jfDatasetAll, PlotOrientation.VERTICAL,
-						true, true, true);
-
-				Paint[] paintArray = { new Color(0x80ff0000, true) };
-				jfChartAll.getPlot()
-						.setDrawingSupplier(new DefaultDrawingSupplier(paintArray,
-								DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-
-				final XYPlot plot = jfChartAll.getXYPlot();
-				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
-				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
-
-				allPlotPanel.setImage(jfChartAll.createBufferedImage(frameWidth / 3, frameHeight - 35));
-			}
-		};
-
-		thread2 = new Thread() {
-			public void run() {
-				HistogramDataset jfDatasetVertical = new HistogramDataset();
-				jfDatasetVertical.setType(HistogramType.RELATIVE_FREQUENCY);
-				jfDatasetVertical.addSeries("A", verticalDataset, 50, -128.0, 128.0);
-				JFreeChart jfChartVertical = ChartFactory.createHistogram("", "", "", jfDatasetVertical,
-						PlotOrientation.VERTICAL, true, true, false);
-
-				Paint[] paintArray = { new Color(0x8000ff00, true) };
-				jfChartVertical.getPlot()
-						.setDrawingSupplier(new DefaultDrawingSupplier(paintArray,
-								DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-
-				final XYPlot plot = jfChartVertical.getXYPlot();
-				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
-				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
-
-				verticalPlotPanel.setImage(jfChartVertical.createBufferedImage(frameWidth / 3, frameHeight - 35));
-			}
-		};
-
-		thread3 = new Thread() {
-			public void run() {
-				HistogramDataset jfDatasetHorizontal = new HistogramDataset();
-				jfDatasetHorizontal.setType(HistogramType.RELATIVE_FREQUENCY);
-				jfDatasetHorizontal.addSeries("B", horizontalDataset, 50, -128.0, 128.0);
-				JFreeChart jfChartHorizontal = ChartFactory.createHistogram("", "", "", jfDatasetHorizontal,
-						PlotOrientation.VERTICAL, true, true, false);
-
-				Paint[] paintArray = { new Color(0x800000ff, true) };
-				jfChartHorizontal.getPlot()
-						.setDrawingSupplier(new DefaultDrawingSupplier(paintArray,
-								DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
-								DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-
-				final XYPlot plot = jfChartHorizontal.getXYPlot();
-				BarRenderer.setDefaultBarPainter(new StandardBarPainter());
-				((XYBarRenderer) plot.getRenderer()).setBarPainter(new StandardXYBarPainter());
-
-				horizontalPlotPanel.setImage(jfChartHorizontal.createBufferedImage(frameWidth / 3, frameHeight - 35));
-			}
-		};
-
-		thread1.start();
-		thread2.start();
-		thread3.start();
-
-		try {
-			thread1.join();
-			thread2.join();
-			thread3.join();
-		} catch (InterruptedException e) {
-
-		}
-
-		this.setVisible(true);
 	}
 
 	public void setDataset(BufferedImage image, int x, int y, int datasetWidth, int datasetHeight) {
-		this.image = image;
+		this.image = null;
+		datasetL = null;
+		datasetA = null;
+		datasetB = null;
+
 		this.x = x;
 		this.y = y;
 		this.datasetWidth = datasetWidth;
 		this.datasetHeight = datasetHeight;
-	}
+		this.image = image;
 
-	public String getHistogramName() {
-		return histogramName;
-	}
+		System.gc();
 
-	public void setHistogramName(String histogramName) {
-		this.histogramName = histogramName;
-	}
+		datasetL = new double[datasetWidth * datasetHeight];
+		datasetA = new double[datasetWidth * datasetHeight];
+		datasetB = new double[datasetWidth * datasetHeight];
 
-	public String getxAxisName() {
-		return xAxisName;
-	}
-
-	public void setxAxisName(String xAxisName) {
-		this.xAxisName = xAxisName;
-	}
-
-	public String getyAxisName() {
-		return yAxisName;
-	}
-
-	public void setyAxisName(String yAxisName) {
-		this.yAxisName = yAxisName;
+		isNeedToCollectDatasets = true;
 	}
 
 	public int getBins() {
@@ -306,7 +332,14 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 	}
 
 	public void setBins(int bins) {
+		if (bins < 10) {
+			bins = 10;
+		} else if (bins > 100) {
+			bins = 100;
+		}
+
 		this.bins = bins;
+		binsSlider.setValue(bins);
 	}
 
 	public void componentHidden(ComponentEvent arg0) {
@@ -328,6 +361,11 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 
 	public void componentShown(ComponentEvent arg0) {
 		// TODO Auto-generated method stub
+	}
 
+	private void updateBins() {
+		this.bins = binsSlider.getValue();
+		isNeedToCollectDatasets = false;
+		showHistogram();
 	}
 }

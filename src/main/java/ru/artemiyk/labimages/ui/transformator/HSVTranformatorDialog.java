@@ -335,10 +335,6 @@ public class HSVTranformatorDialog extends JDialog {
 		g.drawImage(originalImage, 0, 0, imageWidth, imageHeight, null);
 		g.dispose();
 
-		// BufferedImage scaledImage = ImageUtils
-		// .toBufferedImage(originalImage.getScaledInstance(imageWidth, imageHeight,
-		// BufferedImage.SCALE_FAST));
-
 		for (int y = 0; y < scaledImage.getHeight(); y++) {
 			for (int x = 0; x < scaledImage.getWidth(); x++) {
 				scaledImage.setRGB(x, y, getChangedRGB(scaledImage.getRGB(x, y)));
