@@ -268,7 +268,7 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 	}
 	
 	private void fillDataset() {
-		ExecutorService threadPool = Executors.newFixedThreadPool(16);
+		ExecutorService threadPool = Executors.newFixedThreadPool(8);
 
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < datasetHeight; i++) {

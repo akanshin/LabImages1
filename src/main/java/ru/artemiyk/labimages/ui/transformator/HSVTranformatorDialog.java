@@ -7,6 +7,14 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -24,6 +32,7 @@ import javax.swing.event.ChangeListener;
 import ru.artemiyk.labimages.LabImages;
 import ru.artemiyk.labimages.imageutils.ImageUtils;
 import ru.artemiyk.labimages.pixelutils.PixelHSV;
+import ru.artemiyk.labimages.pixelutils.PixelRGB;
 
 public class HSVTranformatorDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
@@ -45,8 +54,12 @@ public class HSVTranformatorDialog extends JDialog {
 	private int hueShift;
 	private int satShift;
 	private int valShift;
+	
+	private double rgbMax = 255.0;
+	private double rgbMin = 0.0;
 
 	private JProgressBar progressBar;
+	private ExecutorService threadPool;
 
 	private class ImagePanel extends JPanel {
 		private static final long serialVersionUID = 1L;
@@ -80,6 +93,7 @@ public class HSVTranformatorDialog extends JDialog {
 
 	public HSVTranformatorDialog(BufferedImage image) {
 		this.originalImage = image;
+		threadPool = Executors.newFixedThreadPool(8);
 
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setResizable(false);
@@ -290,27 +304,23 @@ public class HSVTranformatorDialog extends JDialog {
 
 	private void onOk() {
 		final BufferedImage clonedImage = ImageUtils.deepCopy(originalImage);
-		progressBar.setMaximum(clonedImage.getHeight());
+		
+		progressBar.setMaximum(2 * clonedImage.getHeight());
 		progressBar.setMinimum(0);
 		progressBar.setVisible(true);
-		Thread thread = new Thread() {
-			@Override
-			public void run() {
-				for (int y = 0; y < clonedImage.getHeight(); y++) {
-					for (int x = 0; x < clonedImage.getWidth(); x++) {
-						clonedImage.setRGB(x, y, getChangedRGB(clonedImage.getRGB(x, y)));
-					}
-					progressBar.setValue(y + 1);
-				}
-				LabImages.getInstance().getMainWindow().getImagePanel().setImage(clonedImage);
-				HSVTranformatorDialog.this.dispose();
-			}
-		};
-		thread.start();
+
+		normalize(clonedImage, progressBar);
+		applyChange(clonedImage, progressBar);
+		
+		LabImages.getInstance().getMainWindow().getImagePanel().setImage(clonedImage);
+		HSVTranformatorDialog.this.dispose();
+		
+		threadPool.shutdown();
 	}
 
 	private void onCancel() {
 		this.dispose();
+		threadPool.shutdown();
 	}
 
 	private void updatePreview() {
@@ -334,42 +344,169 @@ public class HSVTranformatorDialog extends JDialog {
 		Graphics g = scaledImage.createGraphics();
 		g.drawImage(originalImage, 0, 0, imageWidth, imageHeight, null);
 		g.dispose();
-
-		for (int y = 0; y < scaledImage.getHeight(); y++) {
-			for (int x = 0; x < scaledImage.getWidth(); x++) {
-				scaledImage.setRGB(x, y, getChangedRGB(scaledImage.getRGB(x, y)));
-			}
-		}
+		
+		normalize(scaledImage, null);
+		applyChange(scaledImage, null);
 
 		imagePanel.setImage(scaledImage);
 	}
 
-	private int getChangedRGB(int rgb) {
-		PixelHSV hsv = new PixelHSV(rgb);
-		double hue = hsv.getHue();
-		double sat = hsv.getSaturation();
-		double val = hsv.getValue();
+	private int getChangedRGB(int rgb, double[] hsvBuf, double[] rgbBuf) {
+		PixelHSV.getHSV(rgb, hsvBuf);
 
-		hue += (double) hueShift;
-		hue = hue >= 360.0 ? hue - 360.0 : hue;
-		hue = hue < 0.0 ? hue + 360.0 : hue;
+		hsvBuf[0] += (double) hueShift;
+		hsvBuf[0] = hsvBuf[0] >= 360.0 ? hsvBuf[0] - 360.0 : hsvBuf[0];
+		hsvBuf[0] = hsvBuf[0] < 0.0 ? hsvBuf[0] + 360.0 : hsvBuf[0];
 
 		if (satShift >= 0) {
-			sat += (1.0 - sat) * (double) satShift / 100.0;
+			hsvBuf[1] += (1.0 - hsvBuf[1]) * (double) satShift / 100.0;
 		} else {
-			sat += sat * (double) satShift / 100.0;
+			hsvBuf[1] += hsvBuf[1] * (double) satShift / 100.0;
 		}
 
 		if (valShift >= 0) {
-			val += (1.0 - val) * (double) valShift / 100.0;
+			hsvBuf[2] += (1.0 - hsvBuf[2]) * (double) valShift / 100.0;
 		} else {
-			val += val * (double) valShift / 100.0;
+			hsvBuf[2] += hsvBuf[2] * (double) valShift / 100.0;
+		}
+		
+		PixelHSV.getRGB(hsvBuf, rgbBuf);
+		
+		double rgbRange = rgbMax - rgbMin;
+		for (int i = 0; i < 3; i++) {
+			rgbBuf[i] = (rgbBuf[i] - rgbMin) / rgbRange * 255.0;
 		}
 
-		hsv.setHue(hue);
-		hsv.setSaturation(sat);
-		hsv.setValue(val);
+		return PixelRGB.getRGB(rgbBuf);
+	}
+	
+	private void applyChange(BufferedImage image, JProgressBar pBar) {
+		final int width = image.getWidth();
+		final int height = image.getHeight();
 
-		return hsv.getRGB();
+		List<Future<Void>> futureList = new ArrayList<>();
+		for (int i = 0; i < height; i++) {
+			final int iClone = i;
+			
+			Supplier<Void> supplier = new Supplier<Void>() {
+				public int ii = iClone;
+
+				@Override
+				public Void get() {
+					double[] rgb = new double[3];
+					double[] hsv = new double[3];
+					
+					for (int j = 0; j < width; j++) {
+						image.setRGB(j, ii, getChangedRGB(image.getRGB(j, ii), hsv, rgb));
+					}
+					
+					if (pBar != null) {
+						asynchProgressIncrement();
+					}
+					
+					return null;
+				}
+			};
+
+			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
+		}
+		
+		for (Future<Void> future : futureList) {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+
+			}
+		}
+	}
+	
+	private void normalize(BufferedImage image, JProgressBar pBar) {
+		final int width = image.getWidth();
+		final int height = image.getHeight();
+
+		List<Future<Void>> futureList = new ArrayList<>();
+		for (int i = 0; i < height; i++) {
+			final int iClone = i;
+			
+			Supplier<Void> supplier = new Supplier<Void>() {
+				public int ii = iClone;
+
+				@Override
+				public Void get() {
+					double min = 0.0;
+					double max = 255.0;
+					double[] rgb = new double[3];
+					double[] hsv = new double[3];
+					for (int j = 0; j < width; j++) {
+						PixelHSV.getHSV(image.getRGB(j, ii), hsv);
+						
+						hsv[0] += (double) hueShift;
+						hsv[0] = hsv[0] >= 360.0 ? hsv[0] - 360.0 : hsv[0];
+						hsv[0] = hsv[0] < 0.0 ? hsv[0] + 360.0 : hsv[0];
+
+						if (satShift >= 0) {
+							hsv[1] += (1.0 - hsv[1]) * (double) satShift / 100.0;
+						} else {
+							hsv[1] += hsv[1] * (double) satShift / 100.0;
+						}
+
+						if (valShift >= 0) {
+							hsv[2] += (1.0 - hsv[2]) * (double) valShift / 100.0;
+						} else {
+							hsv[2] += hsv[2] * (double) valShift / 100.0;
+						}
+						
+						PixelHSV.getRGB(hsv, rgb);
+						
+						for (int rgbIndex = 0; rgbIndex < 3; rgbIndex++) {
+							if (rgb[rgbIndex] > max) {
+								max = rgb[rgbIndex];
+							} else if (rgb[rgbIndex] < min) {
+								min = rgb[rgbIndex];
+							}
+						}
+					}
+					
+					setMinRgb(min);
+					setMaxRgb(max);
+					
+					if (pBar != null) {
+						asynchProgressIncrement();
+					}
+					
+					return null;
+				}
+			};
+
+			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
+		}
+		
+		for (Future<Void> future : futureList) {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+
+			}
+		}
+	}
+	
+	private synchronized void asynchProgressIncrement() {
+		int val = progressBar.getValue();
+		val++;
+		if (progressBar.getMaximum() > val) {
+			progressBar.setValue(val);
+		}
+	}
+	
+	private synchronized void setMinRgb(double val) {
+		if (val < rgbMin) {
+			rgbMin = val;
+		}
+	}
+	
+	private synchronized void setMaxRgb(double val) {
+		if (val > rgbMax) {
+			rgbMax = val;
+		}
 	}
 }

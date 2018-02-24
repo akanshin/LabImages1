@@ -61,4 +61,25 @@ public class PixelRGB {
 	public void setRGB(int rgb) {
 		this.rgb = rgb;
 	}
+	
+	public static int getRGB(double[] rgb) {
+		int red = (int) rgb[0];
+		int green = (int) rgb[1];
+		int blue = (int) rgb[2];
+		int alpha = 255;
+		if (rgb.length > 3) {
+			alpha = (int) rgb[3];
+		}
+		
+		int intRgb = 0;
+		intRgb |= alpha & 0x000000FF;
+		intRgb <<= 8;
+		intRgb |= red & 0x000000FF;
+		intRgb <<= 8;
+		intRgb |= green & 0x000000FF;
+		intRgb <<= 8;
+		intRgb |= blue & 0x000000FF;
+		
+		return intRgb;
+	}
 }
