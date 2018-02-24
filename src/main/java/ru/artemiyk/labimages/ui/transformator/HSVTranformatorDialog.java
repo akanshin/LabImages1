@@ -271,7 +271,7 @@ public class HSVTranformatorDialog extends JDialog {
 
 		progressBar = new JProgressBar();
 		//progressBar.setBackground(Color.WHITE);
-		progressBar.setBounds(10, 186, 462, 14);
+		progressBar.setBounds(5, 186, 495, 30);
 		progressBar.setVisible(false);
 		contentPanel.add(progressBar);
 
@@ -308,19 +308,21 @@ public class HSVTranformatorDialog extends JDialog {
 		progressBar.setMaximum(2 * clonedImage.getHeight());
 		progressBar.setMinimum(0);
 		progressBar.setVisible(true);
-
-		normalize(clonedImage, progressBar);
-		applyChange(clonedImage, progressBar);
-		
-		LabImages.getInstance().getMainWindow().getImagePanel().setImage(clonedImage);
-		HSVTranformatorDialog.this.dispose();
-		
-		threadPool.shutdown();
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+				normalize(clonedImage, progressBar);
+				applyChange(clonedImage, progressBar);
+				
+				LabImages.getInstance().getMainWindow().getImagePanel().setImage(clonedImage);
+				HSVTranformatorDialog.this.dispose();
+			}
+		};
+		thread.start();
 	}
 
 	private void onCancel() {
 		this.dispose();
-		threadPool.shutdown();
 	}
 
 	private void updatePreview() {
@@ -381,6 +383,8 @@ public class HSVTranformatorDialog extends JDialog {
 	}
 	
 	private void applyChange(BufferedImage image, JProgressBar pBar) {
+		
+		
 		final int width = image.getWidth();
 		final int height = image.getHeight();
 
