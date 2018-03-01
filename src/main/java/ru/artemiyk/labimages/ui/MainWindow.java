@@ -16,8 +16,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
 
-import ru.artemiyk.labimages.ui.transformator.HSVTranformatorDialog;
-
 public class MainWindow extends JFrame {
 	/**
 	 * Default serial verstion uid

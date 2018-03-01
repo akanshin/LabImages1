@@ -1,55 +1,61 @@
 package ru.artemiyk.labimages.filter;
 
 public class GaborKernel extends KernelBase {
-	
-	private double lambda = 1.0;
-	private double theta = 0.0;
-	private double psi = 0.0;
-	private double sigma = 1.0;
-	private double gamma = 1.0;
 
-	public GaborKernel(double lambda, double theta, double psi, double sigma, double gamma) {
+	private double lambda;
+	private double theta;
+	private double psi;
+	private double sigma;
+	private double gamma;
+
+	public GaborKernel(double lambda, double theta, int psi, int sigma, double gamma, int kernelSize) {
 		this.lambda = lambda;
 		this.theta = theta;
-		this.psi = psi;
-		this.sigma = sigma;
+		this.psi =  Math.PI * (double) psi / 180.0;
+		this.sigma = (double) sigma;
 		this.gamma = gamma;
 		
-		if (lambda <= Double.MIN_VALUE && lambda >= -Double.MIN_VALUE) {
-			throw new IllegalArgumentException();
+		if (kernelSize % 2 == 1) {
+			kernelSize++;
 		}
-		
-		if (sigma <= Double.MIN_VALUE && sigma >= -Double.MIN_VALUE) {
-			throw new IllegalArgumentException();
-		}
-		
-		if (gamma <= Double.MIN_VALUE && gamma >= -Double.MIN_VALUE) {
-			throw new IllegalArgumentException();
-		}
-		
-		createKernel(1 + 3 * (int) sigma);
+
+		createKernel(kernelSize);
 		fillKernel();
+		setGrayscale(false);
+		setNormalize(false);
 	}
-	
+
 	@Override
 	protected void fillKernel() {
+		if ((sigma <= Double.MIN_VALUE && sigma >= -Double.MIN_VALUE) || lambda < 1.0) {
+			setValue(0, 0, 1.0);
+			return;
+		}
+
 		for (int y = begin(); y <= end(); y++) {
 			for (int x = begin(); x <= end(); x++) {
 				double xx = xX(x, y, theta);
 				double yy = yY(x, y, theta);
-				
-				double valExp = Math.exp(-(xx * xx + gamma * gamma * yy * yy) / (2.0 * sigma * sigma));
-				double valCos = Math.cos(2.0 * Math.PI * xx / lambda + psi);
+
+				double expDegree = 0.5 * (xx * xx + gamma * gamma * yy * yy) / (sigma * sigma);
+				double cosArg = 2.0 * Math.PI * xx / lambda + psi;
+
+				double valExp = Math.exp(-expDegree);
+				double valCos = Math.cos(cosArg);
 				setValue(x, y, valExp * valCos);
 			}
 		}
 	}
 
 	private static double xX(int x, int y, double theta) {
-		return (double) x * Math.cos(theta) + (double) y + Math.sin(theta);
+		double xx = (double) x;
+		double yy = (double) y;
+		return xx * Math.cos(theta) + yy + Math.sin(theta);
 	}
-	
+
 	private static double yY(int x, int y, double theta) {
-		return (double) -x * Math.sin(theta) + (double) y + Math.cos(theta);
+		double xx = (double) x;
+		double yy = (double) y;
+		return -xx * Math.sin(theta) + yy + Math.cos(theta);
 	}
 }

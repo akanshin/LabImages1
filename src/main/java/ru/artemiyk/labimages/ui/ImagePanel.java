@@ -22,9 +22,6 @@ import ru.artemiyk.labimages.LabImages;
 import ru.artemiyk.labimages.pixelutils.PixelCIELAB;
 import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
-import ru.artemiyk.labimages.ui.plot.ArrayFrame;
-import ru.artemiyk.labimages.ui.plot.HistogramFrame;
-import ru.artemiyk.labimages.ui.transformator.GaussianBlurDialog;
 
 public class ImagePanel extends JPanel
 		implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
@@ -240,7 +237,10 @@ public class ImagePanel extends JPanel
 			LabImages.getInstance().getMainWindow().showMessage("Invalid image file");
 		}
 
-		viewedImage = image;
+		viewedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+		Graphics g = (Graphics) viewedImage.createGraphics();
+		g.drawImage(image, 0, 0, null);
+		g.dispose();
 
 		this.setAllView();
 	}
@@ -581,11 +581,18 @@ public class ImagePanel extends JPanel
 
 	public void setImage(BufferedImage newImage) {
 		viewedImage = newImage;
+		viewedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+		Graphics g = (Graphics) viewedImage.createGraphics();
+		g.drawImage(newImage, 0, 0, null);
+		g.dispose();
 		this.repaint();
 	}
 
 	public void setDefaultImage() {
-		viewedImage = image;
+		viewedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+		Graphics g = (Graphics) viewedImage.createGraphics();
+		g.drawImage(image, 0, 0, null);
+		g.dispose();
 		this.repaint();
 	}
 
@@ -604,11 +611,23 @@ public class ImagePanel extends JPanel
 	}
 	
 	public void showGaborFilterDialog() {
+		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics g = viewedImageCopy.createGraphics();
+		g.drawImage(viewedImage, 0, 0, null);
 		
+		GaborFilterDialog sfd = new GaborFilterDialog();
+		sfd.setImages(viewedImageCopy, viewedImage);
+		sfd.setVisible(true);
 	}
 	
 	public void showSobelFilterDialog() {
+		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics g = viewedImageCopy.createGraphics();
+		g.drawImage(viewedImage, 0, 0, null);
 		
+		SobelFilterDialog sfd = new SobelFilterDialog();
+		sfd.setImages(viewedImageCopy, viewedImage);
+		sfd.setVisible(true);
 	}
 	
 	public void revertImageFilterChanges() {

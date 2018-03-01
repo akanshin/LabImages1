@@ -4,8 +4,6 @@ import java.io.File;
 
 import javax.swing.UIManager;
 
-import ru.artemiyk.labimages.filter.KernelBase;
-import ru.artemiyk.labimages.filter.SobelKernel;
 import ru.artemiyk.labimages.ui.MainWindow;
 
 public class LabImages {

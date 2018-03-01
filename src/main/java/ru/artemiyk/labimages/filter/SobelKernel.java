@@ -4,10 +4,12 @@ public class SobelKernel extends KernelBase {
 	private double directionAngle = 0.0;
 
 	public SobelKernel(double angle) {
-		this.directionAngle = angle / 180.0 * Math.PI;
+		this.directionAngle = 2 * Math.PI * angle / 360.0;
 
 		createKernel(3);
 		fillKernel();
+		setGrayscale(true);
+		setNormalize(false);
 	}
 
 	@Override

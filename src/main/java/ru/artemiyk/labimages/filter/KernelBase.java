@@ -3,6 +3,11 @@ package ru.artemiyk.labimages.filter;
 public abstract class KernelBase {
 	private int kernelCenter;
 	private double[][] kernel;
+	private double kernelSumm;
+	
+	private boolean isGrayscale = false;
+	
+	private boolean isNormalize = true;
 
 	public KernelBase() {
 
@@ -34,6 +39,35 @@ public abstract class KernelBase {
 		kernel[kernelCenter + x][kernelCenter + y] = val;
 	}
 	
+	public boolean isGrayscale() {
+		return isGrayscale;
+	}
+	
+	protected void setGrayscale(boolean isGrayscale) {
+		this.isGrayscale = isGrayscale;
+	}
+	
+	public boolean isNormalize() {
+		return isNormalize;
+	}
+
+	public void setNormalize(boolean isNormalize) {
+		this.isNormalize = isNormalize;
+	}
+	
+	protected void summ() {
+		kernelSumm = 0;
+		for (int y = begin(); y <= end(); y++) {
+			for (int x = begin(); x <= end(); x++) {
+				kernelSumm += getValue(x, y);
+			}
+		}
+	}
+	
+	public double getSumm() {
+		return (kernelSumm > Double.MIN_VALUE || kernelSumm < -Double.MIN_VALUE) ? kernelSumm : 1.0;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

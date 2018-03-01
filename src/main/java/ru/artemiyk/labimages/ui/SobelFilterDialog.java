@@ -1,8 +1,7 @@
-package ru.artemiyk.labimages.ui.transformator;
+package ru.artemiyk.labimages.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,134 +25,125 @@ import javax.swing.event.ChangeListener;
 import ru.artemiyk.labimages.LabImages;
 import ru.artemiyk.labimages.filter.EProgressState;
 import ru.artemiyk.labimages.filter.FilterApplyer;
-import ru.artemiyk.labimages.filter.GaussianKernel;
 import ru.artemiyk.labimages.filter.ProgressListener;
+import ru.artemiyk.labimages.filter.SobelKernel;
 
-public class GaussianBlurDialog extends JDialog {
+public class SobelFilterDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
+	
 	private final JPanel contentPanel = new JPanel();
-
+	
 	private int dialogWidth = 406;
 	private int dialogHeight = 128;
 
-	private int radius = 2;
+	private int angle = 0;
 
 	private JSlider slider;
 	private JSpinner spinner;
 	private JProgressBar progressBar;
-
+	
 	private BufferedImage imageToRead;
 	private BufferedImage imageToWrite;
-
+	
 	private FilterApplyer filterApplyer;
 	private boolean disposeOnFinish = false;
 	private boolean applying = false;
 	
 	private Color background = Color.WHITE;
 
-	public GaussianBlurDialog() {
+	public SobelFilterDialog() {
+		super(LabImages.getInstance().getMainWindow(), true);
+		
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Gaussian filter");
+		setTitle("Sobel filter");
 		try {
 			setIconImage(
-					ImageIO.read(new File(getClass().getClassLoader().getResource("gaussian_blur.png").getFile())));
+					ImageIO.read(new File(getClass().getClassLoader().getResource("sobel_filter.png").getFile())));
 		} catch (Exception ex) {
 
 		}
-
+		
 		Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
 		int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
 		int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
-		setBounds(dialogX, dialogY, 406, 121);
-
+		setBounds(dialogX, dialogY, 406, 120);
+		
 		setResizable(false);
+		setBounds(100, 100, 406, 120);
 		getContentPane().setLayout(new BorderLayout());
-		contentPanel.setBorder(new TitledBorder(null, "Radius", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		contentPanel.setBorder(new TitledBorder(null, "Angle", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(null);
 		contentPanel.setBackground(background);
-
-		slider = new JSlider();
-		slider.setBackground(background);
-		slider.setPaintTicks(true);
-		slider.setBounds(10, 21, 260, 23);
-		slider.setValue(radius);
-		slider.setMaximum(40);
-		contentPanel.add(slider);
-		slider.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				radius = slider.getValue();
-				if (spinner != null) {
-					spinner.setValue(radius);
-				}
-
-				calculate();
-			}
-		});
-
+		
 		spinner = new JSpinner();
-		spinner.setBackground(background);
-		spinner.setBounds(new Rectangle(10, 10, 70, 20));
 		spinner.setBounds(280, 21, 70, 20);
-		spinner.setMaximumSize(new Dimension(70, 20));
-		spinner.setMinimumSize(new Dimension(70, 20));
-		spinner.setModel(new SpinnerNumberModel(radius, 0, 40, 1));
+		spinner.setModel(new SpinnerNumberModel(angle, 0, 360, 1));
 		contentPanel.add(spinner);
 		spinner.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
-				radius = (Integer) spinner.getValue();
+				angle = (Integer) spinner.getValue();
 				if (slider != null) {
-					slider.setValue(radius);
+					slider.setValue(angle);
 				}
 
 				calculate();
 			}
 		});
-
+		
 		JButton defaultButton = new JButton("");
-		defaultButton.setBackground(background);
-		defaultButton.setBounds(new Rectangle(360, 21, 20, 20));
-		defaultButton.setMinimumSize(new Dimension(16, 16));
-		defaultButton.setMaximumSize(new Dimension(16, 16));
+		defaultButton.setBounds(360, 21, 20, 20);
 		defaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
 		contentPanel.add(defaultButton);
 		defaultButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				radius = 2;
+				angle = 0;
 				if (slider != null) {
-					slider.setValue(radius);
+					slider.setValue(angle);
 				}
 				if (spinner != null) {
-					spinner.setValue(radius);
+					spinner.setValue(angle);
 				}
 				
 				calculate();
 			}
 		});
 		
+		slider = new JSlider();
+		slider.setPaintTicks(true);
+		slider.setMinimum(0);
+		slider.setMaximum(360);
+		slider.setValue(0);
+		slider.setSnapToTicks(true);
+		slider.setBounds(10, 21, 260, 23);
+		slider.setBackground(background);
+		contentPanel.add(slider);
+		slider.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				angle = slider.getValue();
+				if (spinner != null) {
+					spinner.setValue(angle);
+				}
+
+				calculate();
+			}
+		});
+
 		JPanel buttonPane = new JPanel();
 		buttonPane.setBackground(background);
 		getContentPane().add(buttonPane, BorderLayout.SOUTH);
 		buttonPane.setLayout(new BorderLayout(0, 0));
-
-		progressBar = new JProgressBar();
-		progressBar.setBackground(background);
-		progressBar.setMinimumSize(new Dimension(10, 14));
-		progressBar.setMaximumSize(new Dimension(32767, 14));
-		progressBar.setIndeterminate(true);
-		progressBar.setVisible(false);
-		buttonPane.add(progressBar);
-
+		
 		JPanel panel = new JPanel();
 		panel.setBackground(background);
 		buttonPane.add(panel, BorderLayout.EAST);
 
 		JButton okButton = new JButton("OK");
-		okButton.setBackground(background);
 		panel.add(okButton);
+		okButton.setBackground(background);
 		okButton.setActionCommand("OK");
 		getRootPane().setDefaultButton(okButton);
 		okButton.addActionListener(new ActionListener() {
@@ -173,18 +163,25 @@ public class GaussianBlurDialog extends JDialog {
 				onCancel();
 			}
 		});
-	}
+		
+		progressBar = new JProgressBar();
+		progressBar.setBackground(background);
+		progressBar.setIndeterminate(true);
+		progressBar.setVisible(false);
+		buttonPane.add(progressBar, BorderLayout.CENTER);
 
+	}
+	
 	public void setImages(BufferedImage imageToRead, BufferedImage imageToWrite) {
 		this.imageToRead = imageToRead;
 		this.imageToWrite = imageToWrite;
 
 		progressBar.setMinimum(0);
-		progressBar.setMaximum(imageToRead.getWidth() * imageToRead.getHeight());
+		progressBar.setMaximum(2 * imageToRead.getHeight());
 
 		calculate();
 	}
-
+	
 	private void onOk() {
 		progressBar.setIndeterminate(false);
 		disposeOnFinish = true;
@@ -240,7 +237,7 @@ public class GaussianBlurDialog extends JDialog {
 			}
 		});
 		
-		filterApplyer.setKernel(new GaussianKernel(radius));
+		filterApplyer.setKernel(new SobelKernel((double) angle));
 
 		filterApplyer.start();
 		
@@ -260,11 +257,10 @@ public class GaussianBlurDialog extends JDialog {
 				applying = false;
 				
 				if (disposeOnFinish) {
-					GaussianBlurDialog.this.dispose();
+					SobelFilterDialog.this.dispose();
 				}
 			}
 		};
 		thread.start();
 	}
-
 }

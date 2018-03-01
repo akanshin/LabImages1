@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
 
 public class FilterApplyer extends Thread {
@@ -62,7 +63,7 @@ public class FilterApplyer extends Thread {
 				multiThreadApplying();
 			}
 		} catch (InterruptedException e) {
-			
+
 		}
 	}
 
@@ -212,25 +213,44 @@ public class FilterApplyer extends Thread {
 		double greenSum = 0;
 		double blueSum = 0;
 		double alphaSum = 0;
-		double kernelSum = 0;
+
+		int rgb = 0;
+		double[] hsvBuf = new double[3];
+		double[] rgbBuf = new double[4];
 
 		for (int kernelY = kernel.begin(); kernelY <= kernel.end(); kernelY++) {
 			for (int kernelX = kernel.begin(); kernelX <= kernel.end(); kernelX++) {
-				int rgb = getRgb(x + kernelX, y + kernelY);
+				rgb = getRgb(x + kernelX, y + kernelY);
 
-				blueSum += (double) ((rgb >> 0) & 255) * kernel.getValue(kernelX, kernelY);
-				greenSum += (double) ((rgb >> 8) & 255) * kernel.getValue(kernelX, kernelY);
-				redSum += (double) ((rgb >> 16) & 255) * kernel.getValue(kernelX, kernelY);
-				alphaSum += (double) ((rgb >> 24) & 255) * kernel.getValue(kernelX, kernelY);
+				if (kernel.isGrayscale()) {
+					PixelHSV.getHSV(rgb, hsvBuf);
+					hsvBuf[1] = 0.0;
+					PixelHSV.getRGB(hsvBuf, rgbBuf);
+					rgbBuf[3] = (double) ((rgb >> 24) & 255);
+				} else {
+					rgbBuf[0] = (double) ((rgb >> 0) & 255);
+					rgbBuf[1] = (double) ((rgb >> 8) & 255);
+					rgbBuf[2] = (double) ((rgb >> 16) & 255);
+					rgbBuf[3] = (double) ((rgb >> 24) & 255);
+				}
 
-				kernelSum += kernel.getValue(kernelX, kernelY);
+				blueSum += rgbBuf[0] * kernel.getValue(kernelX, kernelY);
+				greenSum += rgbBuf[1] * kernel.getValue(kernelX, kernelY);
+				redSum += rgbBuf[2] * kernel.getValue(kernelX, kernelY);
+				alphaSum += rgbBuf[3] * kernel.getValue(kernelX, kernelY);
 			}
 		}
 
-		rgba[0] = redSum / kernelSum;
-		rgba[1] = greenSum / kernelSum;
-		rgba[2] = blueSum / kernelSum;
-		rgba[3] = alphaSum / kernelSum;
+		rgba[0] = redSum;
+		rgba[1] = greenSum;
+		rgba[2] = blueSum;
+		rgba[3] = alphaSum;
+		
+		if (kernel.isNormalize()) {
+			for (int i = 0; i < 4; i++) {
+				rgba[i] /= kernel.getSumm();
+			}
+		}
 	}
 
 	private int getRgb(int x, int y) {

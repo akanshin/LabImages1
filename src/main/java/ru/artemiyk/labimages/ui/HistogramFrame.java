@@ -1,4 +1,4 @@
-package ru.artemiyk.labimages.ui.plot;
+package ru.artemiyk.labimages.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
