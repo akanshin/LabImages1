@@ -10,6 +10,7 @@ import java.awt.Paint;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -120,6 +122,13 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 		this.setBounds(0, 0, frameWidth, frameHeight);
 		this.setMinimumSize(new Dimension(frameWidth, frameHeight));
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
+		
+		setTitle("LAB Histograms");
+		try {
+			setIconImage(ImageIO.read(new File(getClass().getClassLoader().getResource("hist.png").getFile())));
+		} catch (Exception ex) {
+			
+		}
 
 		plotPanelL = new PlotPanel();
 		plotPanelA = new PlotPanel();

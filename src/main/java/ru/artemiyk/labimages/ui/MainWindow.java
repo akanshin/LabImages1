@@ -1,6 +1,7 @@
 package ru.artemiyk.labimages.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -28,17 +29,20 @@ public class MainWindow extends JFrame {
 	private int displayWidth;
 	private int displayHeight;
 
-	private JToolBar toolBar;
-	
 	private ImagePanel imagePanel;
 	private StatusBar statusBar;
-	
+
+	private Color toolBarColor = Color.WHITE;
+	private JToolBar toolBar;
 	private JButton openButton;
 	private JButton defaultViewButton;
 	private JButton expandButton;
 	private JButton showMassiveButton;
 	private JButton showHistButton;
 	private JButton changeHSVButton;
+	private JButton gaussianBlurButton;
+	private JButton gaborFilterButton;
+	private JButton sobelFilterButton;
 	private JButton setDefaultImageButton;
 	private JButton selectAllButton;
 	private JButton questionButton;
@@ -87,10 +91,10 @@ public class MainWindow extends JFrame {
 	private void buildToolBar() {
 		toolBar = new JToolBar();
 		toolBar.setFloatable(false);
-		//toolBar.setBackground(Color.WHITE);
+		toolBar.setBackground(toolBarColor);
 		
 		openButton = new JButton();
-		//openButton.setBackground(Color.WHITE);
+		openButton.setBackground(toolBarColor);
 		openButton.setToolTipText("Open image");
 		toolBar.add(openButton);
 		openButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("open.png")));
@@ -103,7 +107,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		defaultViewButton = new JButton();
-		//defaultViewButton.setBackground(Color.WHITE);
+		defaultViewButton.setBackground(toolBarColor);
 		defaultViewButton.setToolTipText("Default scale");
 		toolBar.add(defaultViewButton);
 		defaultViewButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("default_view.png")));
@@ -114,7 +118,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		expandButton = new JButton();
-		//expandButton.setBackground(Color.WHITE);
+		expandButton.setBackground(toolBarColor);
 		expandButton.setToolTipText("Scale to window");
 		toolBar.add(expandButton);
 		expandButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("expand.png")));
@@ -127,7 +131,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		selectAllButton = new JButton();
-		//selectAllButton.setBackground(Color.WHITE);
+		selectAllButton.setBackground(toolBarColor);
 		selectAllButton.setToolTipText("Select all");
 		toolBar.add(selectAllButton);
 		selectAllButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("select.png")));
@@ -138,7 +142,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		showMassiveButton = new JButton();
-		//showMassiveButton.setBackground(Color.WHITE);
+	    showMassiveButton.setBackground(toolBarColor);
 		showMassiveButton.setToolTipText("Show massive");
 		toolBar.add(showMassiveButton);
 		showMassiveButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("show_rgb.png")));
@@ -149,7 +153,7 @@ public class MainWindow extends JFrame {
 		});
 		
 		showHistButton = new JButton();
-		//showHistButton.setBackground(Color.WHITE);
+		showHistButton.setBackground(toolBarColor);
 		showHistButton.setToolTipText("Show histogram");
 		toolBar.add(showHistButton);
 		showHistButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hist.png")));
@@ -162,7 +166,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		changeHSVButton = new JButton();
-		//changeHSVButton.setBackground(Color.WHITE);
+		changeHSVButton.setBackground(toolBarColor);
 		changeHSVButton.setToolTipText("Change HSV");
 		toolBar.add(changeHSVButton);
 		changeHSVButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hsv.png")));
@@ -173,8 +177,41 @@ public class MainWindow extends JFrame {
 			}
 		});
 		
+		gaussianBlurButton = new JButton();
+		gaussianBlurButton.setBackground(toolBarColor);
+		gaussianBlurButton.setToolTipText("Gaussian blur");
+		toolBar.add(gaussianBlurButton);
+		gaussianBlurButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gaussian_blur.png")));
+		gaussianBlurButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				imagePanel.showGaussianBlurDialog();
+			}
+		});
+		
+		gaborFilterButton = new JButton();
+		gaborFilterButton.setBackground(toolBarColor);
+		gaborFilterButton.setToolTipText("Gabor filter");
+		toolBar.add(gaborFilterButton);
+		gaborFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gabor_filter.png")));
+		gaborFilterButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				imagePanel.showGaborFilterDialog();
+			}
+		});
+		
+		sobelFilterButton = new JButton();
+		sobelFilterButton.setBackground(toolBarColor);
+		sobelFilterButton.setToolTipText("Sobel filter");
+		toolBar.add(sobelFilterButton);
+		sobelFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("sobel_filter.png")));
+		sobelFilterButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				imagePanel.showSobelFilterDialog();
+			}
+		});
+		
 		setDefaultImageButton = new JButton();
-		//setDefaultImageButton.setBackground(Color.WHITE);
+		setDefaultImageButton.setBackground(toolBarColor);
 		setDefaultImageButton.setToolTipText("Default HSV");
 		toolBar.add(setDefaultImageButton);
 		setDefaultImageButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("set_default.png")));
@@ -187,7 +224,7 @@ public class MainWindow extends JFrame {
 		toolBar.addSeparator();
 		
 		questionButton = new JButton();
-		//questionButton.setBackground(Color.WHITE);
+		questionButton.setBackground(toolBarColor);
 		questionButton.setToolTipText("If you don't know what to do, click!");
 		toolBar.add(questionButton);
 		questionButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("question.png")));

@@ -24,6 +24,7 @@ import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
 import ru.artemiyk.labimages.ui.plot.ArrayFrame;
 import ru.artemiyk.labimages.ui.plot.HistogramFrame;
+import ru.artemiyk.labimages.ui.transformator.GaussianBlurDialog;
 
 public class ImagePanel extends JPanel
 		implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
@@ -31,6 +32,7 @@ public class ImagePanel extends JPanel
 
 	private BufferedImage image;
 	private BufferedImage viewedImage;
+	private BufferedImage viewedImageCopy;
 	private int imageX, imageY;
 	private int imageWidth, imageHeight;
 	private int panelWidth, panelHeight;
@@ -589,5 +591,28 @@ public class ImagePanel extends JPanel
 
 	public BufferedImage getImage() {
 		return viewedImage;
+	}
+	
+	public void showGaussianBlurDialog() {
+		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics g = viewedImageCopy.createGraphics();
+		g.drawImage(viewedImage, 0, 0, null);
+		
+		GaussianBlurDialog gbd = new GaussianBlurDialog();
+		gbd.setImages(viewedImageCopy, viewedImage);
+		gbd.setVisible(true);
+	}
+	
+	public void showGaborFilterDialog() {
+		
+	}
+	
+	public void showSobelFilterDialog() {
+		
+	}
+	
+	public void revertImageFilterChanges() {
+		viewedImage = viewedImageCopy;
+		repaint();
 	}
 }

@@ -4,6 +4,8 @@ import java.io.File;
 
 import javax.swing.UIManager;
 
+import ru.artemiyk.labimages.filter.KernelBase;
+import ru.artemiyk.labimages.filter.SobelKernel;
 import ru.artemiyk.labimages.ui.MainWindow;
 
 public class LabImages {
@@ -20,10 +22,10 @@ public class LabImages {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
-			
+
 		}
 
-		this.window = new MainWindow("LabImages 1", 1280, 720);
+		this.window = new MainWindow("LabImages 1", 720, 720);
 		this.window.setVisible(true);
 		this.window.getImagePanel().loadImage(new File(getClass().getClassLoader().getResource("lenna.png").getFile()));
 	}

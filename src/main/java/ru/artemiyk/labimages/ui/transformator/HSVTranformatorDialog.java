@@ -1,12 +1,14 @@
 package ru.artemiyk.labimages.ui.transformator;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -71,18 +74,19 @@ public class HSVTranformatorDialog extends JDialog {
 				return;
 			}
 
-			int imageWidth = this.image.getWidth(this);
-			int imageHeight = this.image.getHeight(this);
-			int panelWidth = this.getWidth();
-			int panelHeight = this.getHeight();
-
-			int imageX = panelWidth / 2 - imageWidth / 2;
-			int imageY = panelHeight / 2 - imageHeight / 2;
-
-			g2d.setColor(this.getBackground());
-			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
-			//g2d.clearRect(0, 0, this.getWidth(), this.getHeight());
-			g2d.drawImage(image, imageX, imageY, imageWidth, imageHeight, this);
+//			int imageWidth = this.image.getWidth(this);
+//			int imageHeight = this.image.getHeight(this);
+//			int panelWidth = this.getWidth();
+//			int panelHeight = this.getHeight();
+//
+//			int imageX = panelWidth / 2 - imageWidth / 2;
+//			int imageY = panelHeight / 2 - imageHeight / 2;
+//
+//			g2d.setColor(this.getBackground());
+//			g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+//			//g2d.clearRect(0, 0, this.getWidth(), this.getHeight());
+			//g2d.drawImage(image, imageX, imageY, imageWidth, imageHeight, this);
+			g2d.drawImage(image, 0, 0, this.getWidth(), this.getHeight(), this);
 		}
 
 		public void setImage(BufferedImage image) {
@@ -94,10 +98,17 @@ public class HSVTranformatorDialog extends JDialog {
 	public HSVTranformatorDialog(BufferedImage image) {
 		this.originalImage = image;
 		threadPool = Executors.newFixedThreadPool(8);
+		
+		setTitle("Change HSV");
+		try {
+			setIconImage(ImageIO.read(new File(getClass().getClassLoader().getResource("hsv.png").getFile())));
+		} catch (Exception ex) {
+			
+		}
 
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setResizable(false);
-		setBounds(100, 100, 510, 273);
+		setBounds(100, 100, 510, 250);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -268,17 +279,22 @@ public class HSVTranformatorDialog extends JDialog {
 				updatePreview();
 			}
 		});
+		
+		JPanel southPanel = new JPanel();
+		southPanel.setLayout(new BorderLayout());
+		getContentPane().add(southPanel, BorderLayout.SOUTH);
 
 		progressBar = new JProgressBar();
-		//progressBar.setBackground(Color.WHITE);
-		progressBar.setBounds(5, 186, 495, 30);
 		progressBar.setVisible(false);
-		contentPanel.add(progressBar);
-
+		progressBar.setStringPainted(true);
+		progressBar.setMaximumSize(new Dimension(1000, 20));
+		southPanel.add(progressBar, BorderLayout.CENTER);
+		
 		JPanel buttonPane = new JPanel();
 		//buttonPane.setBackground(Color.WHITE);
 		buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		getContentPane().add(buttonPane, BorderLayout.SOUTH);
+		//getContentPane().add(buttonPane, BorderLayout.SOUTH);
+		southPanel.add(buttonPane, BorderLayout.EAST);
 
 		JButton okButton = new JButton("OK");
 		//okButton.setBackground(Color.WHITE);
@@ -329,22 +345,27 @@ public class HSVTranformatorDialog extends JDialog {
 		int panelWidth = imagePanel.getWidth();
 		int panelHeight = imagePanel.getHeight();
 
-		int imageWidth = 0;
-		int imageHeight = 0;
+//		int imageWidth = 0;
+//		int imageHeight = 0;
+//
+//		int originalWidth = originalImage.getWidth(this);
+//		int originalHeight = originalImage.getHeight(this);
+//		if ((double) originalWidth / (double) originalHeight > (double) panelWidth / (double) panelHeight) {
+//			imageWidth = panelWidth;
+//			imageHeight = originalHeight * panelWidth / originalWidth;
+//		} else {
+//			imageHeight = panelHeight;
+//			imageWidth = originalWidth * panelHeight / originalHeight;
+//		}
+//
+//		BufferedImage scaledImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+//		Graphics g = scaledImage.createGraphics();
+//		g.drawImage(originalImage, 0, 0, imageWidth, imageHeight, null);
+//		g.dispose();
 
-		int originalWidth = originalImage.getWidth(this);
-		int originalHeight = originalImage.getHeight(this);
-		if ((double) originalWidth / (double) originalHeight > (double) panelWidth / (double) panelHeight) {
-			imageWidth = panelWidth;
-			imageHeight = originalHeight * panelWidth / originalWidth;
-		} else {
-			imageHeight = panelHeight;
-			imageWidth = originalWidth * panelHeight / originalHeight;
-		}
-
-		BufferedImage scaledImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage scaledImage = new BufferedImage(panelWidth, panelHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = scaledImage.createGraphics();
-		g.drawImage(originalImage, 0, 0, imageWidth, imageHeight, null);
+		g.drawImage(originalImage, 0, 0, panelWidth, panelHeight, null);
 		g.dispose();
 		
 		normalize(scaledImage, null);
@@ -383,7 +404,9 @@ public class HSVTranformatorDialog extends JDialog {
 	}
 	
 	private void applyChange(BufferedImage image, JProgressBar pBar) {
-		
+		if (pBar != null) {
+			pBar.setString("Applying");
+		}
 		
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -405,7 +428,7 @@ public class HSVTranformatorDialog extends JDialog {
 					}
 					
 					if (pBar != null) {
-						asynchProgressIncrement();
+						progressIncrement();
 					}
 					
 					return null;
@@ -425,6 +448,10 @@ public class HSVTranformatorDialog extends JDialog {
 	}
 	
 	private void normalize(BufferedImage image, JProgressBar pBar) {
+		if (pBar != null) {
+			pBar.setString("Normalizing");
+		}
+		
 		final int width = image.getWidth();
 		final int height = image.getHeight();
 
@@ -475,7 +502,7 @@ public class HSVTranformatorDialog extends JDialog {
 					setMaxRgb(max);
 					
 					if (pBar != null) {
-						asynchProgressIncrement();
+						progressIncrement();
 					}
 					
 					return null;
@@ -494,7 +521,7 @@ public class HSVTranformatorDialog extends JDialog {
 		}
 	}
 	
-	private synchronized void asynchProgressIncrement() {
+	private synchronized void progressIncrement() {
 		int val = progressBar.getValue();
 		val++;
 		if (progressBar.getMaximum() > val) {

@@ -7,7 +7,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 
+import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -30,6 +32,13 @@ public class ArrayFrame extends JFrame implements ComponentListener {
 		this.setBounds(100, 100, 400, 400);
 		this.setMinimumSize(new Dimension(400, 400));
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		
+		setTitle("Massive");
+		try {
+			setIconImage(ImageIO.read(new File(getClass().getClassLoader().getResource("show_rgb.png").getFile())));
+		} catch (Exception ex) {
+			
+		}
 		
 		contentPane = new JPanel();
 		contentPane.setLayout(new BorderLayout());
