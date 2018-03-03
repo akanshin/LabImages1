@@ -48,7 +48,7 @@ public class ImagePanel extends JPanel
 
 	private HistogramFrame histogram;
 	private ArrayFrame array;
-	
+
 	private BufferedImage histPrevImage;
 	private int histPrevX;
 	private int histPrevY;
@@ -559,19 +559,15 @@ public class ImagePanel extends JPanel
 		if (histogram == null) {
 			histogram = new HistogramFrame();
 		}
-		
-		if (histPrevImage == viewedImage
-				&& histPrevX == x
-				&& histPrevY == y
-				&& histPrevWidth == width
-				&& histPrevHeight == height
-				&& histogram.isVisible()) {
+
+		if (histPrevImage == viewedImage && histPrevX == x && histPrevY == y && histPrevWidth == width
+				&& histPrevHeight == height && histogram.isVisible()) {
 			return;
 		}
 
 		histogram.setDataset(viewedImage, x, y, width, height);
 		histogram.showHistogram();
-		
+
 		histPrevImage = viewedImage;
 		histPrevX = x;
 		histPrevY = y;
@@ -599,37 +595,40 @@ public class ImagePanel extends JPanel
 	public BufferedImage getImage() {
 		return viewedImage;
 	}
-	
+
 	public void showGaussianBlurDialog() {
-		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(),
+				BufferedImage.TYPE_INT_ARGB);
 		Graphics g = viewedImageCopy.createGraphics();
 		g.drawImage(viewedImage, 0, 0, null);
-		
+
 		GaussianBlurDialog gbd = new GaussianBlurDialog();
 		gbd.setImages(viewedImageCopy, viewedImage);
 		gbd.setVisible(true);
 	}
-	
+
 	public void showGaborFilterDialog() {
-		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(),
+				BufferedImage.TYPE_INT_ARGB);
 		Graphics g = viewedImageCopy.createGraphics();
 		g.drawImage(viewedImage, 0, 0, null);
-		
+
 		GaborFilterDialog sfd = new GaborFilterDialog();
 		sfd.setImages(viewedImageCopy, viewedImage);
 		sfd.setVisible(true);
 	}
-	
+
 	public void showSobelFilterDialog() {
-		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(),
+				BufferedImage.TYPE_INT_ARGB);
 		Graphics g = viewedImageCopy.createGraphics();
 		g.drawImage(viewedImage, 0, 0, null);
-		
+
 		SobelFilterDialog sfd = new SobelFilterDialog();
 		sfd.setImages(viewedImageCopy, viewedImage);
 		sfd.setVisible(true);
 	}
-	
+
 	public void revertImageFilterChanges() {
 		viewedImage = viewedImageCopy;
 		repaint();

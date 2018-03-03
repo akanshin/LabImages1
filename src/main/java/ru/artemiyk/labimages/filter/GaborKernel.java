@@ -8,9 +8,9 @@ public class GaborKernel extends KernelBase {
 	private double sigma;
 	private double gamma;
 
-	public GaborKernel(double lambda, double theta, int psi, int sigma, double gamma, int kernelSize) {
+	public GaborKernel(double lambda, int theta, int psi, int sigma, double gamma, int kernelSize) {
 		this.lambda = lambda;
-		this.theta = theta;
+		this.theta = Math.PI * (double) theta / 180.0;
 		this.psi =  Math.PI * (double) psi / 180.0;
 		this.sigma = (double) sigma;
 		this.gamma = gamma;
@@ -19,10 +19,10 @@ public class GaborKernel extends KernelBase {
 			kernelSize++;
 		}
 
-		createKernel(kernelSize);
+		createKernel(kernelSize, kernelSize);
 		fillKernel();
-		setGrayscale(false);
-		setNormalize(false);
+		setGrayscale(true);
+		setNormalize(true);
 	}
 
 	@Override
@@ -32,8 +32,8 @@ public class GaborKernel extends KernelBase {
 			return;
 		}
 
-		for (int y = begin(); y <= end(); y++) {
-			for (int x = begin(); x <= end(); x++) {
+		for (int y = begin(1); y <= end(1); y++) {
+			for (int x = begin(0); x <= end(0); x++) {
 				double xx = xX(x, y, theta);
 				double yy = yY(x, y, theta);
 

@@ -11,15 +11,10 @@ import java.io.File;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -27,20 +22,23 @@ import ru.artemiyk.labimages.LabImages;
 import ru.artemiyk.labimages.filter.EProgressState;
 import ru.artemiyk.labimages.filter.FilterApplyer;
 import ru.artemiyk.labimages.filter.GaussianKernel;
+import ru.artemiyk.labimages.filter.KernelComponent;
 import ru.artemiyk.labimages.filter.ProgressListener;
 
 public class GaussianBlurDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
-	
-	private final JPanel contentPanel = new JPanel();
+
+	private IntegerParameterPanel radiusPanel;
 
 	private int dialogWidth = 406;
 	private int dialogHeight = 128;
 
-	private int radius = 2;
+	private int radius = radiusDefault;
+	private static final int radiusDefault = 2;
+	private static final int radiusMinimum = 0;
+	private static final int radiusMaximum = 100;
+	private static final int radiusStep = 1;
 
-	private JSlider slider;
-	private JSpinner spinner;
 	private JProgressBar progressBar;
 
 	private BufferedImage imageToRead;
@@ -49,12 +47,12 @@ public class GaussianBlurDialog extends JDialog {
 	private FilterApplyer filterApplyer;
 	private boolean disposeOnFinish = false;
 	private boolean applying = false;
-	
+
 	private Color background = Color.WHITE;
 
 	public GaussianBlurDialog() {
 		super(LabImages.getInstance().getMainWindow(), true);
-		
+
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle("Gaussian filter");
 		try {
@@ -71,72 +69,19 @@ public class GaussianBlurDialog extends JDialog {
 
 		setResizable(false);
 		getContentPane().setLayout(new BorderLayout());
-		contentPanel.setBorder(new TitledBorder(null, "Radius", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		getContentPane().add(contentPanel, BorderLayout.CENTER);
-		contentPanel.setLayout(null);
-		contentPanel.setBackground(background);
 
-		slider = new JSlider();
-		slider.setBounds(10, 21, 260, 23);
-		slider.setBackground(background);
-		slider.setPaintTicks(true);
-		slider.setValue(radius);
-		slider.setMaximum(40);
-		contentPanel.add(slider);
-		slider.addChangeListener(new ChangeListener() {
+		radiusPanel = new IntegerParameterPanel("Radius", radius, radiusDefault, radiusMinimum, radiusMaximum,
+				radiusStep);
+		getContentPane().add(radiusPanel, BorderLayout.CENTER);
+		radiusPanel.setBackground(background);
+		radiusPanel.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
-				radius = slider.getValue();
-				if (spinner != null) {
-					spinner.setValue(radius);
-				}
-
+				radius = radiusPanel.getValue();
 				calculate();
 			}
 		});
 
-		spinner = new JSpinner();
-		spinner.setBackground(background);
-		spinner.setBounds(new Rectangle(10, 10, 70, 20));
-		spinner.setBounds(280, 21, 70, 20);
-		spinner.setMaximumSize(new Dimension(70, 20));
-		spinner.setMinimumSize(new Dimension(70, 20));
-		spinner.setModel(new SpinnerNumberModel(radius, 0, 40, 1));
-		contentPanel.add(spinner);
-		spinner.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				radius = (Integer) spinner.getValue();
-				if (slider != null) {
-					slider.setValue(radius);
-				}
-
-				calculate();
-			}
-		});
-
-		JButton defaultButton = new JButton("");
-		defaultButton.setBackground(background);
-		defaultButton.setBounds(new Rectangle(360, 21, 20, 20));
-		defaultButton.setMinimumSize(new Dimension(16, 16));
-		defaultButton.setMaximumSize(new Dimension(16, 16));
-		defaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
-		contentPanel.add(defaultButton);
-		defaultButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				radius = 2;
-				if (slider != null) {
-					slider.setValue(radius);
-				}
-				if (spinner != null) {
-					spinner.setValue(radius);
-				}
-				
-				calculate();
-			}
-		});
-		
 		JPanel buttonPane = new JPanel();
 		buttonPane.setBackground(background);
 		getContentPane().add(buttonPane, BorderLayout.SOUTH);
@@ -183,7 +128,7 @@ public class GaussianBlurDialog extends JDialog {
 		this.imageToWrite = imageToWrite;
 
 		progressBar.setMinimum(0);
-		progressBar.setMaximum(2 * imageToRead.getHeight());
+		progressBar.setMaximum(4 * imageToRead.getHeight());
 
 		calculate();
 	}
@@ -218,11 +163,10 @@ public class GaussianBlurDialog extends JDialog {
 			try {
 				filterApplyer.join();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		
+
 		filterApplyer = new FilterApplyer();
 		filterApplyer.setThreadPool(Executors.newFixedThreadPool(8));
 		filterApplyer.setImageToRead(imageToRead);
@@ -231,22 +175,25 @@ public class GaussianBlurDialog extends JDialog {
 			@Override
 			public void progressChanged(EProgressState progressState) {
 				progressIncrement();
-				
+
 				progressBar.setStringPainted(true);
 				if (progressState == EProgressState.eNormalizing) {
 					progressBar.setString("Normalizing");
 				} else if (progressState == EProgressState.eApplying) {
 					progressBar.setString("Applying");
 				}
-				
+
 				LabImages.getInstance().getMainWindow().getImagePanel().repaint();
 			}
 		});
-		
-		filterApplyer.setKernel(new GaussianKernel(radius));
+
+		filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eVertical));
+		filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eHorizontal));
+		// filterApplyer.addKernel(new GaussianKernel(radius,
+		// KernelComponent.eHorizontalandVertical));
 
 		filterApplyer.start();
-		
+
 		Thread thread = new Thread() {
 			@Override
 			public void run() {
@@ -257,11 +204,11 @@ public class GaussianBlurDialog extends JDialog {
 					filterApplyer.join();
 					progressBar.setVisible(false);
 				} catch (InterruptedException e) {
-					
+
 				}
-				
+
 				applying = false;
-				
+
 				if (disposeOnFinish) {
 					GaussianBlurDialog.this.dispose();
 				}
@@ -269,5 +216,4 @@ public class GaussianBlurDialog extends JDialog {
 		};
 		thread.start();
 	}
-
 }

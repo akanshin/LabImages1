@@ -35,7 +35,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ru.artemiyk.labimages.LabImages;
-import ru.artemiyk.labimages.imageutils.ImageUtils;
 import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
 
@@ -319,7 +318,10 @@ public class HSVTranformatorDialog extends JDialog {
 	}
 
 	private void onOk() {
-		final BufferedImage clonedImage = ImageUtils.deepCopy(originalImage);
+		BufferedImage clonedImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), originalImage.getType());
+		Graphics g = clonedImage.createGraphics();
+		g.drawImage(originalImage, 0, 0, null);
+		g.dispose();
 		
 		progressBar.setMaximum(2 * clonedImage.getHeight());
 		progressBar.setMinimum(0);
@@ -345,25 +347,7 @@ public class HSVTranformatorDialog extends JDialog {
 		int panelWidth = imagePanel.getWidth();
 		int panelHeight = imagePanel.getHeight();
 
-//		int imageWidth = 0;
-//		int imageHeight = 0;
-//
-//		int originalWidth = originalImage.getWidth(this);
-//		int originalHeight = originalImage.getHeight(this);
-//		if ((double) originalWidth / (double) originalHeight > (double) panelWidth / (double) panelHeight) {
-//			imageWidth = panelWidth;
-//			imageHeight = originalHeight * panelWidth / originalWidth;
-//		} else {
-//			imageHeight = panelHeight;
-//			imageWidth = originalWidth * panelHeight / originalHeight;
-//		}
-//
-//		BufferedImage scaledImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
-//		Graphics g = scaledImage.createGraphics();
-//		g.drawImage(originalImage, 0, 0, imageWidth, imageHeight, null);
-//		g.dispose();
-
-		BufferedImage scaledImage = new BufferedImage(panelWidth, panelHeight, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage scaledImage = new BufferedImage(panelWidth, panelHeight, originalImage.getType());
 		Graphics g = scaledImage.createGraphics();
 		g.drawImage(originalImage, 0, 0, panelWidth, panelHeight, null);
 		g.dispose();

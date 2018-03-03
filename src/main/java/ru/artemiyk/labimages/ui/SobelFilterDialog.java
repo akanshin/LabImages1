@@ -10,15 +10,10 @@ import java.io.File;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -31,15 +26,17 @@ import ru.artemiyk.labimages.filter.SobelKernel;
 public class SobelFilterDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 	
-	private final JPanel contentPanel = new JPanel();
+	private IntegerParameterPanel anglePanel;
 	
 	private int dialogWidth = 406;
 	private int dialogHeight = 128;
 
-	private int angle = 0;
+	private int angle = angleDefault;
+	private static final int angleDefault = 0;
+	private static final int angleMinimum = 0;
+	private static final int angleMaximum = 360;
+	private static final int angleStep = 1;
 
-	private JSlider slider;
-	private JSpinner spinner;
 	private JProgressBar progressBar;
 	
 	private BufferedImage imageToRead;
@@ -66,68 +63,19 @@ public class SobelFilterDialog extends JDialog {
 		Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
 		int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
 		int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
-		setBounds(dialogX, dialogY, 406, 120);
+		setBounds(dialogX, dialogY, dialogWidth, dialogHeight);
 		
 		setResizable(false);
-		setBounds(100, 100, 406, 120);
+
 		getContentPane().setLayout(new BorderLayout());
-		contentPanel.setBorder(new TitledBorder(null, "Angle", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		getContentPane().add(contentPanel, BorderLayout.CENTER);
-		contentPanel.setLayout(null);
-		contentPanel.setBackground(background);
 		
-		spinner = new JSpinner();
-		spinner.setBounds(280, 21, 70, 20);
-		spinner.setModel(new SpinnerNumberModel(angle, 0, 360, 1));
-		contentPanel.add(spinner);
-		spinner.addChangeListener(new ChangeListener() {
+		anglePanel = new IntegerParameterPanel("Angle", angle, angleDefault, angleMinimum, angleMaximum, angleStep);
+		getContentPane().add(anglePanel, BorderLayout.CENTER);
+		anglePanel.setBackground(background);
+		anglePanel.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
-				angle = (Integer) spinner.getValue();
-				if (slider != null) {
-					slider.setValue(angle);
-				}
-
-				calculate();
-			}
-		});
-		
-		JButton defaultButton = new JButton("");
-		defaultButton.setBounds(360, 21, 20, 20);
-		defaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
-		contentPanel.add(defaultButton);
-		defaultButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				angle = 0;
-				if (slider != null) {
-					slider.setValue(angle);
-				}
-				if (spinner != null) {
-					spinner.setValue(angle);
-				}
-				
-				calculate();
-			}
-		});
-		
-		slider = new JSlider();
-		slider.setPaintTicks(true);
-		slider.setMinimum(0);
-		slider.setMaximum(360);
-		slider.setValue(0);
-		slider.setSnapToTicks(true);
-		slider.setBounds(10, 21, 260, 23);
-		slider.setBackground(background);
-		contentPanel.add(slider);
-		slider.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				angle = slider.getValue();
-				if (spinner != null) {
-					spinner.setValue(angle);
-				}
-
+				angle = anglePanel.getValue();
 				calculate();
 			}
 		});
@@ -237,7 +185,7 @@ public class SobelFilterDialog extends JDialog {
 			}
 		});
 		
-		filterApplyer.setKernel(new SobelKernel((double) angle));
+		filterApplyer.addKernel(new SobelKernel((double) angle));
 
 		filterApplyer.start();
 		

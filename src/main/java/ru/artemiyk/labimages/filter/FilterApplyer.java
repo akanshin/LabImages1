@@ -1,5 +1,6 @@
 package ru.artemiyk.labimages.filter;
 
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +14,12 @@ import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
 
 public class FilterApplyer extends Thread {
-	private KernelBase kernel;
+	private List<KernelBase> kernels = new ArrayList<KernelBase>();
 
 	private ExecutorService threadPool;
 
 	private BufferedImage imageToRead;
+	private BufferedImage imageTemp;
 	private BufferedImage imageToWrite;
 
 	private List<ProgressListener> listeners;
@@ -33,8 +35,8 @@ public class FilterApplyer extends Thread {
 		listeners.add(progressListener);
 	}
 
-	public void setKernel(KernelBase kernel) {
-		this.kernel = kernel;
+	public void addKernel(KernelBase kernel) {
+		kernels.add(kernel);
 	}
 
 	public void setThreadPool(ExecutorService threadPool) {
@@ -43,6 +45,10 @@ public class FilterApplyer extends Thread {
 
 	public void setImageToRead(BufferedImage imageToRead) {
 		this.imageToRead = imageToRead;
+		imageTemp = new BufferedImage(imageToRead.getWidth(), imageToRead.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics g = imageTemp.createGraphics();
+		g.drawImage(imageToRead, 0, 0, null);
+		g.dispose();
 	}
 
 	public void setImageToWrite(BufferedImage imageToWrite) {
@@ -50,28 +56,40 @@ public class FilterApplyer extends Thread {
 	}
 
 	public void run() {
-		if (imageToRead == null || imageToWrite == null || kernel == null) {
+		if (imageToRead == null || imageToWrite == null || kernels.isEmpty()) {
 			return;
 		}
 
 		try {
 			if (threadPool == null) {
-				singleThreadNormalization();
-				singleThreadApplying();
+				for (KernelBase kernel : kernels) {
+					singleThreadNormalization(kernel);
+					singleThreadApplying(kernel);
+					
+					Graphics g = imageTemp.createGraphics();
+					g.drawImage(imageToWrite, 0, 0, null);
+					g.dispose();
+				}
 			} else {
-				multiThreadNormalization();
-				multiThreadApplying();
+				for (KernelBase kernel : kernels) {
+					multiThreadNormalization(kernel);
+					multiThreadApplying(kernel);
+					
+					Graphics g = imageTemp.createGraphics();
+					g.drawImage(imageToWrite, 0, 0, null);
+					g.dispose();
+				}
 			}
 		} catch (InterruptedException e) {
 
 		}
 	}
 
-	private void singleThreadNormalization() throws InterruptedException {
+	private void singleThreadNormalization(KernelBase kernel) throws InterruptedException {
 		double[] rgba = new double[4];
 		for (int i = 0; i < imageToRead.getHeight(); i++) {
 			for (int j = 0; j < imageToRead.getWidth(); j++) {
-				applyFilter(j, i, rgba);
+				applyFilter(j, i, rgba, kernel);
 
 				addNormalizedValue(rgba[0]);
 				addNormalizedValue(rgba[1]);
@@ -89,7 +107,7 @@ public class FilterApplyer extends Thread {
 		}
 	}
 
-	private void multiThreadNormalization() throws InterruptedException {
+	private void multiThreadNormalization(KernelBase kernel) throws InterruptedException {
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < imageToRead.getHeight(); i++) {
 			final int iClone = i;
@@ -102,7 +120,7 @@ public class FilterApplyer extends Thread {
 					double[] rgba = new double[4];
 
 					for (int jj = 0; jj < imageToRead.getWidth(); jj++) {
-						applyFilter(jj, ii, rgba);
+						applyFilter(jj, ii, rgba, kernel);
 
 						addNormalizedValue(rgba[0]);
 						addNormalizedValue(rgba[1]);
@@ -143,11 +161,11 @@ public class FilterApplyer extends Thread {
 		}
 	}
 
-	private void singleThreadApplying() throws InterruptedException {
+	private void singleThreadApplying(KernelBase kernel) throws InterruptedException {
 		double[] rgba = new double[4];
 		for (int i = 0; i < imageToRead.getHeight(); i++) {
 			for (int j = 0; j < imageToRead.getWidth(); j++) {
-				applyFilter(j, i, rgba);
+				applyFilter(j, i, rgba, kernel);
 				normalize(rgba);
 				int rgb = PixelRGB.getRGB(rgba);
 				imageToWrite.setRGB(j, i, rgb);
@@ -163,7 +181,7 @@ public class FilterApplyer extends Thread {
 		}
 	}
 
-	private void multiThreadApplying() throws InterruptedException {
+	private void multiThreadApplying(KernelBase kernel) throws InterruptedException {
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < imageToRead.getHeight(); i++) {
 			final int iClone = i;
@@ -176,7 +194,7 @@ public class FilterApplyer extends Thread {
 					double[] rgba = new double[4];
 
 					for (int jj = 0; jj < imageToRead.getWidth(); jj++) {
-						applyFilter(jj, ii, rgba);
+						applyFilter(jj, ii, rgba, kernel);
 						normalize(rgba);
 						int rgb = PixelRGB.getRGB(rgba);
 						imageToWrite.setRGB(jj, ii, rgb);
@@ -208,7 +226,7 @@ public class FilterApplyer extends Thread {
 		}
 	}
 
-	private void applyFilter(int x, int y, double[] rgba) {
+	private void applyFilter(int x, int y, double[] rgba, KernelBase kernel) {
 		double redSum = 0;
 		double greenSum = 0;
 		double blueSum = 0;
@@ -218,8 +236,8 @@ public class FilterApplyer extends Thread {
 		double[] hsvBuf = new double[3];
 		double[] rgbBuf = new double[4];
 
-		for (int kernelY = kernel.begin(); kernelY <= kernel.end(); kernelY++) {
-			for (int kernelX = kernel.begin(); kernelX <= kernel.end(); kernelX++) {
+		for (int kernelY = kernel.begin(1); kernelY <= kernel.end(1); kernelY++) {
+			for (int kernelX = kernel.begin(0); kernelX <= kernel.end(0); kernelX++) {
 				rgb = getRgb(x + kernelX, y + kernelY);
 
 				if (kernel.isGrayscale()) {
@@ -245,7 +263,7 @@ public class FilterApplyer extends Thread {
 		rgba[1] = greenSum;
 		rgba[2] = blueSum;
 		rgba[3] = alphaSum;
-		
+
 		if (kernel.isNormalize()) {
 			for (int i = 0; i < 4; i++) {
 				rgba[i] /= kernel.getSumm();
@@ -255,12 +273,12 @@ public class FilterApplyer extends Thread {
 
 	private int getRgb(int x, int y) {
 		x = x < 0 ? 0 : x;
-		x = x >= imageToRead.getWidth() ? imageToRead.getWidth() - 1 : x;
+		x = x >= imageTemp.getWidth() ? imageTemp.getWidth() - 1 : x;
 
 		y = y < 0 ? 0 : y;
-		y = y >= imageToRead.getHeight() ? imageToRead.getHeight() - 1 : y;
+		y = y >= imageTemp.getHeight() ? imageTemp.getHeight() - 1 : y;
 
-		return imageToRead.getRGB(x, y);
+		return imageTemp.getRGB(x, y);
 	}
 
 	private synchronized void addNormalizedValue(double val) {
