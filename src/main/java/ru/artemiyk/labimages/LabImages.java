@@ -7,6 +7,8 @@ import javax.swing.UIManager;
 import ru.artemiyk.labimages.ui.MainWindow;
 
 public class LabImages {
+	
+	public static final int THREAD_COUNT = 7;
 
 	private static LabImages instance = null;
 

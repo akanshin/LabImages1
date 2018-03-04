@@ -7,7 +7,6 @@ public abstract class KernelBase {
 	private double kernelSumm;
 
 	private boolean isGrayscale = false;
-
 	private boolean isNormalize = true;
 
 	public KernelBase() {

@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,15 +22,10 @@ import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -47,21 +43,32 @@ public class HSVTranformatorDialog extends JDialog {
 
 	private BufferedImage originalImage;
 
-	private int dialogWidth = 510;
+	private int dialogWidth = 585;
 	private int dialogHeight = 250;
-	
-	private JSlider valueSlider;
-	private JSlider saturationSlider;
-	private JSlider hueSlider;
 
-	private JSpinner hueSpinner;
-	private JSpinner saturationSpinner;
-	private JSpinner valueSpinner;
+	private IntegerParameterPanel hueShiftPanel;
+	private int hueShift = hueShiftDefault;
+	private static final int hueShiftDefault = 0;
+	private static final int hueShiftMinimum = -180;
+	private static final int hueShiftMaximum = 180;
+	private static final int hueShiftStep = 1;
 
-	private int hueShift;
-	private int satShift;
-	private int valShift;
-	
+	private IntegerParameterPanel satShiftPanel;
+	private int satShift = satShiftDefault;
+	private static final int satShiftDefault = 0;
+	private static final int satShiftMinimum = -100;
+	private static final int satShiftMaximum = 100;
+	private static final int satShiftStep = 1;
+
+	private IntegerParameterPanel valShiftPanel;
+	private int valShift = valShiftDefault;
+	private static final int valShiftDefault = 0;
+	private static final int valShiftMinimum = -100;
+	private static final int valShiftMaximum = 100;
+	private static final int valShiftStep = 1;
+
+	private Color background = Color.WHITE;
+
 	private double rgbMax = 255.0;
 	private double rgbMin = 0.0;
 
@@ -77,7 +84,7 @@ public class HSVTranformatorDialog extends JDialog {
 			if (g2d == null) {
 				return;
 			}
-			
+
 			g2d.drawImage(image, 0, 0, this.getWidth(), this.getHeight(), this);
 		}
 
@@ -89,22 +96,22 @@ public class HSVTranformatorDialog extends JDialog {
 
 	public HSVTranformatorDialog(BufferedImage image) {
 		super(LabImages.getInstance().getMainWindow(), true);
-		
+
 		this.originalImage = image;
-		threadPool = Executors.newFixedThreadPool(8);
-		
+		threadPool = Executors.newFixedThreadPool(LabImages.THREAD_COUNT);
+
 		setTitle("Change HSV");
 		try {
 			setIconImage(ImageIO.read(new File(getClass().getClassLoader().getResource("hsv.png").getFile())));
 		} catch (Exception ex) {
-			
+
 		}
 
 		Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
 		int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
 		int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
 		setBounds(dialogX, dialogY, dialogWidth, dialogHeight);
-		
+
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setResizable(false);
 		getContentPane().setLayout(new BorderLayout());
@@ -117,166 +124,48 @@ public class HSVTranformatorDialog extends JDialog {
 		imagePanel.setBounds(10, 10, 160, 160);
 		contentPanel.add(imagePanel);
 
-		hueSlider = new JSlider();
-		hueSlider.setBackground(Color.WHITE);
-		hueSlider.addChangeListener(new ChangeListener() {
+		JPanel parametersPanel = new JPanel();
+		parametersPanel.setBounds(175, 5, 400, 168);
+		parametersPanel.setLayout(new GridLayout(3, 1, 0, 0));
+		contentPanel.add(parametersPanel);
+
+		hueShiftPanel = new IntegerParameterPanel("Hue", hueShift, hueShiftDefault, hueShiftMinimum, hueShiftMaximum,
+				hueShiftStep);
+		parametersPanel.add(hueShiftPanel, BorderLayout.CENTER);
+		hueShiftPanel.setBackground(background);
+		hueShiftPanel.addChangeListener(new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent arg0) {
-				hueShift = hueSlider.getValue();
-				if (hueSpinner != null) {
-					hueSpinner.setValue(hueShift);
-				}
-				updatePreview();
-			}
-		});
-		hueSlider.setValue(0);
-		hueSlider.setToolTipText("Hue");
-		hueSlider.setPaintTicks(true);
-		hueSlider.setPaintLabels(true);
-		hueSlider.setMaximum(180);
-		hueSlider.setMinimum(-180);
-		hueSlider.setBounds(180, 33, 200, 26);
-		contentPanel.add(hueSlider);
-
-		JLabel hueLabel = new JLabel("Hue");
-		hueLabel.setBounds(180, 11, 46, 19);
-		contentPanel.add(hueLabel);
-
-		JLabel saturationLabel = new JLabel("Saturation");
-		saturationLabel.setBounds(180, 70, 64, 19);
-		contentPanel.add(saturationLabel);
-
-		saturationSlider = new JSlider();
-		saturationSlider.setBackground(Color.WHITE);
-		saturationSlider.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				satShift = saturationSlider.getValue();
-				if (saturationSpinner != null) {
-					saturationSpinner.setValue(satShift);
-				}
-				updatePreview();
-			}
-		});
-		saturationSlider.setValue(0);
-		saturationSlider.setToolTipText("Saturation");
-		saturationSlider.setPaintTicks(true);
-		saturationSlider.setPaintLabels(true);
-		saturationSlider.setMinimum(-100);
-		saturationSlider.setBounds(182, 89, 200, 26);
-		contentPanel.add(saturationSlider);
-
-		JLabel valueLabel = new JLabel("Value");
-		valueLabel.setBounds(180, 126, 46, 19);
-		contentPanel.add(valueLabel);
-
-		valueSlider = new JSlider();
-		valueSlider.setBackground(Color.WHITE);
-		valueSlider.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				valShift = valueSlider.getValue();
-				if (valueSpinner != null) {
-					valueSpinner.setValue((Integer) valShift);
-				}
-				updatePreview();
-			}
-		});
-		valueSlider.setValue(0);
-		valueSlider.setMinimum(-100);
-		valueSlider.setToolTipText("Value");
-		valueSlider.setPaintTicks(true);
-		valueSlider.setPaintLabels(true);
-		valueSlider.setBounds(180, 145, 200, 26);
-		contentPanel.add(valueSlider);
-
-		JLabel lblPreview = new JLabel("Preview");
-		lblPreview.setBounds(10, 169, 46, 14);
-		contentPanel.add(lblPreview);
-
-		hueSpinner = new JSpinner();
-		hueSpinner.setBackground(Color.WHITE);
-		hueSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				hueShift = (Integer) hueSpinner.getValue();
-				if (hueSlider != null) {
-					hueSlider.setValue(hueShift);
-				}
-				updatePreview();
-			}
-		});
-		hueSpinner.setModel(new SpinnerNumberModel(0, -180, 180, 1));
-		hueSpinner.setBounds(390, 29, 82, 26);
-		contentPanel.add(hueSpinner);
-		JButton hueDefaultButton = new JButton();
-		hueDefaultButton.setBackground(Color.WHITE);
-		hueDefaultButton.setToolTipText("Set zero");
-		hueDefaultButton.setBounds(475, 29, 26, 26);
-		hueDefaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
-		contentPanel.add(hueDefaultButton);
-		hueDefaultButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				hueShift = 0;
-				hueSlider.setValue(0);
-				hueSpinner.setValue(0);
+				hueShift = hueShiftPanel.getValue();
 				updatePreview();
 			}
 		});
 
-		saturationSpinner = new JSpinner();
-		saturationSpinner.setBackground(Color.WHITE);
-		saturationSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				satShift = (Integer) saturationSpinner.getValue();
-				if (saturationSlider != null) {
-					saturationSlider.setValue(satShift);
-				}
-				updatePreview();
-			}
-		});
-		saturationSpinner.setModel(new SpinnerNumberModel(0, -100, 100, 1));
-		saturationSpinner.setBounds(392, 85, 80, 26);
-		contentPanel.add(saturationSpinner);
-		JButton satDefaultButton = new JButton();
-		satDefaultButton.setBackground(Color.WHITE);
-		satDefaultButton.setToolTipText("Set zero");
-		satDefaultButton.setBounds(475, 85, 26, 26);
-		satDefaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
-		contentPanel.add(satDefaultButton);
-		satDefaultButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				satShift = 0;
-				saturationSlider.setValue(0);
-				saturationSpinner.setValue(0);
+		satShiftPanel = new IntegerParameterPanel("Saturation", satShift, satShiftDefault, satShiftMinimum,
+				satShiftMaximum, satShiftStep);
+		parametersPanel.add(satShiftPanel, BorderLayout.CENTER);
+		satShiftPanel.setBackground(background);
+		satShiftPanel.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				satShift = satShiftPanel.getValue();
 				updatePreview();
 			}
 		});
 
-		valueSpinner = new JSpinner();
-		valueSpinner.setBackground(Color.WHITE);
-		valueSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				valShift = (Integer) valueSpinner.getValue();
-				if (valueSlider != null) {
-					valueSlider.setValue(valShift);
-				}
+		valShiftPanel = new IntegerParameterPanel("Value", valShift, valShiftDefault, valShiftMinimum, valShiftMaximum,
+				valShiftStep);
+		parametersPanel.add(valShiftPanel, BorderLayout.CENTER);
+		valShiftPanel.setBackground(background);
+		valShiftPanel.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				valShift = valShiftPanel.getValue();
 				updatePreview();
 			}
 		});
-		valueSpinner.setModel(new SpinnerNumberModel(0, -100, 100, 1));
-		valueSpinner.setBounds(390, 141, 82, 27);
-		contentPanel.add(valueSpinner);
-		JButton valDefaultButton = new JButton();
-		valDefaultButton.setBackground(Color.WHITE);
-		valDefaultButton.setToolTipText("Set zero");
-		valDefaultButton.setBounds(475, 141, 26, 26);
-		valDefaultButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("left_arrow.png")));
-		contentPanel.add(valDefaultButton);
-		valDefaultButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				valShift = 0;
-				valueSlider.setValue(0);
-				valueSpinner.setValue(0);
-				updatePreview();
-			}
-		});
+
+		updatePreview();
 		
 		JPanel southPanel = new JPanel();
 		southPanel.setLayout(new BorderLayout());
@@ -289,7 +178,7 @@ public class HSVTranformatorDialog extends JDialog {
 		progressBar.setStringPainted(true);
 		progressBar.setMaximumSize(new Dimension(1000, 20));
 		southPanel.add(progressBar, BorderLayout.CENTER);
-		
+
 		JPanel buttonPane = new JPanel();
 		buttonPane.setBackground(Color.WHITE);
 		buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -318,11 +207,12 @@ public class HSVTranformatorDialog extends JDialog {
 	}
 
 	private void onOk() {
-		BufferedImage clonedImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), originalImage.getType());
+		BufferedImage clonedImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(),
+				originalImage.getType());
 		Graphics g = clonedImage.createGraphics();
 		g.drawImage(originalImage, 0, 0, null);
 		g.dispose();
-		
+
 		progressBar.setMaximum(2 * clonedImage.getHeight());
 		progressBar.setMinimum(0);
 		progressBar.setVisible(true);
@@ -331,7 +221,7 @@ public class HSVTranformatorDialog extends JDialog {
 			public void run() {
 				normalize(clonedImage, progressBar);
 				applyChange(clonedImage, progressBar);
-				
+
 				LabImages.getInstance().getMainWindow().getImagePanel().setImage(clonedImage);
 				HSVTranformatorDialog.this.dispose();
 			}
@@ -351,7 +241,7 @@ public class HSVTranformatorDialog extends JDialog {
 		Graphics g = scaledImage.createGraphics();
 		g.drawImage(originalImage, 0, 0, panelWidth, panelHeight, null);
 		g.dispose();
-		
+
 		normalize(scaledImage, null);
 		applyChange(scaledImage, null);
 
@@ -376,9 +266,9 @@ public class HSVTranformatorDialog extends JDialog {
 		} else {
 			hsvBuf[2] += hsvBuf[2] * (double) valShift / 100.0;
 		}
-		
+
 		PixelHSV.getRGB(hsvBuf, rgbBuf);
-		
+
 		double rgbRange = rgbMax - rgbMin;
 		for (int i = 0; i < 3; i++) {
 			rgbBuf[i] = (rgbBuf[i] - rgbMin) / rgbRange * 255.0;
@@ -386,19 +276,19 @@ public class HSVTranformatorDialog extends JDialog {
 
 		return PixelRGB.getRGB(rgbBuf);
 	}
-	
+
 	private void applyChange(BufferedImage image, JProgressBar pBar) {
 		if (pBar != null) {
 			pBar.setString("Applying");
 		}
-		
+
 		final int width = image.getWidth();
 		final int height = image.getHeight();
 
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < height; i++) {
 			final int iClone = i;
-			
+
 			Supplier<Void> supplier = new Supplier<Void>() {
 				public int ii = iClone;
 
@@ -406,22 +296,22 @@ public class HSVTranformatorDialog extends JDialog {
 				public Void get() {
 					double[] rgb = new double[3];
 					double[] hsv = new double[3];
-					
+
 					for (int j = 0; j < width; j++) {
 						image.setRGB(j, ii, getChangedRGB(image.getRGB(j, ii), hsv, rgb));
 					}
-					
+
 					if (pBar != null) {
 						progressIncrement();
 					}
-					
+
 					return null;
 				}
 			};
 
 			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
 		}
-		
+
 		for (Future<Void> future : futureList) {
 			try {
 				future.get();
@@ -430,19 +320,19 @@ public class HSVTranformatorDialog extends JDialog {
 			}
 		}
 	}
-	
+
 	private void normalize(BufferedImage image, JProgressBar pBar) {
 		if (pBar != null) {
 			pBar.setString("Normalizing");
 		}
-		
+
 		final int width = image.getWidth();
 		final int height = image.getHeight();
 
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < height; i++) {
 			final int iClone = i;
-			
+
 			Supplier<Void> supplier = new Supplier<Void>() {
 				public int ii = iClone;
 
@@ -454,7 +344,7 @@ public class HSVTranformatorDialog extends JDialog {
 					double[] hsv = new double[3];
 					for (int j = 0; j < width; j++) {
 						PixelHSV.getHSV(image.getRGB(j, ii), hsv);
-						
+
 						hsv[0] += (double) hueShift;
 						hsv[0] = hsv[0] >= 360.0 ? hsv[0] - 360.0 : hsv[0];
 						hsv[0] = hsv[0] < 0.0 ? hsv[0] + 360.0 : hsv[0];
@@ -470,9 +360,9 @@ public class HSVTranformatorDialog extends JDialog {
 						} else {
 							hsv[2] += hsv[2] * (double) valShift / 100.0;
 						}
-						
+
 						PixelHSV.getRGB(hsv, rgb);
-						
+
 						for (int rgbIndex = 0; rgbIndex < 3; rgbIndex++) {
 							if (rgb[rgbIndex] > max) {
 								max = rgb[rgbIndex];
@@ -481,21 +371,21 @@ public class HSVTranformatorDialog extends JDialog {
 							}
 						}
 					}
-					
+
 					setMinRgb(min);
 					setMaxRgb(max);
-					
+
 					if (pBar != null) {
 						progressIncrement();
 					}
-					
+
 					return null;
 				}
 			};
 
 			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
 		}
-		
+
 		for (Future<Void> future : futureList) {
 			try {
 				future.get();
@@ -504,7 +394,7 @@ public class HSVTranformatorDialog extends JDialog {
 			}
 		}
 	}
-	
+
 	private synchronized void progressIncrement() {
 		int val = progressBar.getValue();
 		val++;
@@ -512,13 +402,13 @@ public class HSVTranformatorDialog extends JDialog {
 			progressBar.setValue(val);
 		}
 	}
-	
+
 	private synchronized void setMinRgb(double val) {
 		if (val < rgbMin) {
 			rgbMin = val;
 		}
 	}
-	
+
 	private synchronized void setMaxRgb(double val) {
 		if (val > rgbMax) {
 			rgbMax = val;

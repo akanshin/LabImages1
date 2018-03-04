@@ -39,6 +39,7 @@ import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 
+import ru.artemiyk.labimages.LabImages;
 import ru.artemiyk.labimages.pixelutils.PixelCIELAB;
 
 public class HistogramFrame extends JFrame implements ComponentListener {
@@ -277,7 +278,7 @@ public class HistogramFrame extends JFrame implements ComponentListener {
 	}
 	
 	private void fillDataset() {
-		ExecutorService threadPool = Executors.newFixedThreadPool(8);
+		ExecutorService threadPool = Executors.newFixedThreadPool(LabImages.THREAD_COUNT);
 
 		List<Future<Void>> futureList = new ArrayList<>();
 		for (int i = 0; i < datasetHeight; i++) {

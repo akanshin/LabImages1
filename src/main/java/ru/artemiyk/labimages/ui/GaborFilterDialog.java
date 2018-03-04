@@ -267,7 +267,7 @@ public class GaborFilterDialog extends JDialog {
 		}
 
 		filterApplyer = new FilterApplyer();
-		filterApplyer.setThreadPool(Executors.newFixedThreadPool(8));
+		filterApplyer.setThreadPool(Executors.newFixedThreadPool(LabImages.THREAD_COUNT));
 		filterApplyer.setImageToRead(imageToRead);
 		filterApplyer.setImageToWrite(imageToWrite);
 		filterApplyer.addProgressListener(new ProgressListener() {
