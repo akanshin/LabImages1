@@ -234,7 +234,7 @@ public class ImagePanel extends JPanel
 				throw new Exception();
 			}
 		} catch (Exception e) {
-			LabImages.getInstance().getMainWindow().showMessage("Invalid image file");
+			LabImages.getInstance().getMainWindow().showMessage("Invalid file");
 		}
 
 		viewedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
@@ -243,6 +243,19 @@ public class ImagePanel extends JPanel
 		g.dispose();
 
 		this.setAllView();
+	}
+	
+	public void saveImage(String format, File fileToSave) {
+		try {
+			if (fileToSave == null) {
+				throw new Exception();
+			}
+			
+			ImageIO.write(viewedImage, format, fileToSave);
+			
+		} catch(Exception e) {
+			LabImages.getInstance().getMainWindow().showMessage("Invalid file");
+		}
 	}
 
 	public void componentHidden(ComponentEvent e) {

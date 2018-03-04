@@ -75,6 +75,15 @@ public class StatusBar extends JPanel {
 
 	public void clearSelection() {
 		selectionValue.setText("");
+		if (valueRGB.getText().isEmpty()) {
+			valueRGB.setText("");
+		}
+		if (valueHSV.getText().isEmpty()) {
+			valueHSV.setText("");
+		}
+		if (valueLAB.getText().isEmpty()) {
+			valueLAB.setText("");
+		}
 	}
 
 	public void clearPixelInfo() {
