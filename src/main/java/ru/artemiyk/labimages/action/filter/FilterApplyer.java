@@ -1,4 +1,4 @@
-package ru.artemiyk.labimages.filter;
+package ru.artemiyk.labimages.action.filter;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -10,6 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import ru.artemiyk.labimages.action.EProgressState;
+import ru.artemiyk.labimages.action.ProgressListener;
+import ru.artemiyk.labimages.pixelutils.PixelCIELAB;
 import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
 
@@ -65,7 +68,7 @@ public class FilterApplyer extends Thread {
 				for (KernelBase kernel : kernels) {
 					singleThreadNormalization(kernel);
 					singleThreadApplying(kernel);
-					
+
 					Graphics g = imageTemp.createGraphics();
 					g.drawImage(imageToWrite, 0, 0, null);
 					g.dispose();
@@ -74,7 +77,7 @@ public class FilterApplyer extends Thread {
 				for (KernelBase kernel : kernels) {
 					multiThreadNormalization(kernel);
 					multiThreadApplying(kernel);
-					
+
 					Graphics g = imageTemp.createGraphics();
 					g.drawImage(imageToWrite, 0, 0, null);
 					g.dispose();
@@ -86,6 +89,15 @@ public class FilterApplyer extends Thread {
 	}
 
 	private void singleThreadNormalization(KernelBase kernel) throws InterruptedException {
+		
+		if (kernel.getColorModel() == ColorModel.eLAB) {
+			rgbMin = 255.0;
+			rgbMax = 0.0;
+		} else if (kernel.getColorModel() == ColorModel.eRGB) {
+			rgbMin = 0.0;
+			rgbMax = 255.0;
+		}
+		
 		double[] rgba = new double[4];
 		for (int i = 0; i < imageToRead.getHeight(); i++) {
 			for (int j = 0; j < imageToRead.getWidth(); j++) {
@@ -227,11 +239,11 @@ public class FilterApplyer extends Thread {
 	}
 
 	private void applyFilter(int x, int y, double[] rgba, KernelBase kernel) {
-		double redSum = 0;
-		double greenSum = 0;
-		double blueSum = 0;
-		double alphaSum = 0;
+		for (int i = 0; i < 4; i++) {
+			rgba[i] = 0.0;
+		}
 
+		if (kernel.getColorModel() == ColorModel.eRGB) {
 		int rgb = 0;
 		double[] hsvBuf = new double[3];
 		double[] rgbBuf = new double[4];
@@ -246,28 +258,61 @@ public class FilterApplyer extends Thread {
 					PixelHSV.getRGB(hsvBuf, rgbBuf);
 					rgbBuf[3] = (double) ((rgb >> 24) & 255);
 				} else {
-					rgbBuf[0] = (double) ((rgb >> 0) & 255);
+					rgbBuf[2] = (double) ((rgb >> 0) & 255);
 					rgbBuf[1] = (double) ((rgb >> 8) & 255);
-					rgbBuf[2] = (double) ((rgb >> 16) & 255);
+					rgbBuf[0] = (double) ((rgb >> 16) & 255);
 					rgbBuf[3] = (double) ((rgb >> 24) & 255);
 				}
 
-				blueSum += rgbBuf[0] * kernel.getValue(kernelX, kernelY);
-				greenSum += rgbBuf[1] * kernel.getValue(kernelX, kernelY);
-				redSum += rgbBuf[2] * kernel.getValue(kernelX, kernelY);
-				alphaSum += rgbBuf[3] * kernel.getValue(kernelX, kernelY);
+				
+				for (int i = 0; i < 4; i++) {
+					rgba[i] += rgbBuf[i] * kernel.getValue(kernelX, kernelY);
+				}
 			}
 		}
-
-		rgba[0] = redSum;
-		rgba[1] = greenSum;
-		rgba[2] = blueSum;
-		rgba[3] = alphaSum;
 
 		if (kernel.isNormalize()) {
 			for (int i = 0; i < 4; i++) {
 				rgba[i] /= kernel.getSumm();
 			}
+		}
+		
+//			System.out.println(rgba[0] + " " + rgba[1] + " " + rgba[2] + " " + rgba[3]);
+//			System.exit(0);
+			
+		} else if (kernel.getColorModel() == ColorModel.eLAB) {
+			int rgb = 0;
+			double[] lab = new double[3];
+			double[] resultLab = new double[3];
+
+			for (int kernelY = kernel.begin(1); kernelY <= kernel.end(1); kernelY++) {
+				for (int kernelX = kernel.begin(0); kernelX <= kernel.end(0); kernelX++) {
+					rgb = getRgb(x + kernelX, y + kernelY);
+					PixelCIELAB.getLAB(rgb, lab);
+
+					resultLab[0] += lab[0] * kernel.getValue(kernelX, kernelY);
+				}
+			}
+
+			if (kernel.isNormalize()) {
+				resultLab[0] /= kernel.getSumm();
+			}
+			
+			rgb = getRgb(x, y);
+			PixelCIELAB.getLAB(rgb, lab);
+			resultLab[1] = lab[1];
+			resultLab[2] = lab[2];
+
+			PixelCIELAB.getRGB(resultLab, rgba);
+			rgba[3] = (double) ((rgb >> 24) & 255);
+
+		} else {
+			int rgb = getRgb(x, y);
+
+			rgba[0] = (double) ((rgb >> 0) & 0xFF);
+			rgba[1] = (double) ((rgb >> 8) & 0xFF);
+			rgba[2] = (double) ((rgb >> 16) & 0xFF);
+			rgba[3] = (double) ((rgb >> 24) & 0xFF);
 		}
 	}
 

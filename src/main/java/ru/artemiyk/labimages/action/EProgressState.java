@@ -1,4 +1,4 @@
-package ru.artemiyk.labimages.filter;
+package ru.artemiyk.labimages.action;
 
 public enum EProgressState {
 	eNormalizing, eApplying

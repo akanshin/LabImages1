@@ -19,6 +19,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 import ru.artemiyk.labimages.LabImages;
+import ru.artemiyk.labimages.action.Action;
 import ru.artemiyk.labimages.pixelutils.PixelCIELAB;
 import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
@@ -609,41 +610,27 @@ public class ImagePanel extends JPanel
 		return viewedImage;
 	}
 
-	public void showGaussianBlurDialog() {
+	private void copyImage() {
 		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(),
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics g = viewedImageCopy.createGraphics();
 		g.drawImage(viewedImage, 0, 0, null);
-
-		GaussianBlurDialog gbd = new GaussianBlurDialog();
-		gbd.setImages(viewedImageCopy, viewedImage);
-		gbd.setVisible(true);
-	}
-
-	public void showGaborFilterDialog() {
-		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(),
-				BufferedImage.TYPE_INT_ARGB);
-		Graphics g = viewedImageCopy.createGraphics();
-		g.drawImage(viewedImage, 0, 0, null);
-
-		GaborFilterDialog sfd = new GaborFilterDialog();
-		sfd.setImages(viewedImageCopy, viewedImage);
-		sfd.setVisible(true);
-	}
-
-	public void showSobelFilterDialog() {
-		viewedImageCopy = new BufferedImage(viewedImage.getWidth(), viewedImage.getHeight(),
-				BufferedImage.TYPE_INT_ARGB);
-		Graphics g = viewedImageCopy.createGraphics();
-		g.drawImage(viewedImage, 0, 0, null);
-
-		SobelFilterDialog sfd = new SobelFilterDialog();
-		sfd.setImages(viewedImageCopy, viewedImage);
-		sfd.setVisible(true);
 	}
 
 	public void revertImageFilterChanges() {
 		viewedImage = viewedImageCopy;
+		repaint();
+	}
+	
+	public void produceAction(Action action) {
+		if (action == null) {
+			return;
+		}
+		
+		copyImage();
+		
+		action.produce(viewedImage);
+		
 		repaint();
 	}
 }

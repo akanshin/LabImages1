@@ -1,9 +1,10 @@
-package ru.artemiyk.labimages.filter;
+package ru.artemiyk.labimages.action.filter;
 
 public class SobelKernel extends KernelBase {
 	private double directionAngle = 0.0;
 
 	public SobelKernel(double angle) {
+		super(ColorModel.eRGB);
 		this.directionAngle = 2 * Math.PI * angle / 360.0;
 
 		createKernel(3, 3);

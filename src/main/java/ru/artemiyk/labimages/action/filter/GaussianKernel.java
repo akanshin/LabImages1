@@ -1,10 +1,11 @@
-package ru.artemiyk.labimages.filter;
+package ru.artemiyk.labimages.action.filter;
 
 public class GaussianKernel extends KernelBase {
 	private int radius;
 	private KernelComponent component;
 
 	public GaussianKernel(int radius, KernelComponent component) {
+		super(ColorModel.eRGB);
 		this.radius = radius;
 		if (component == KernelComponent.eVertical) {
 			createKernel(1, 1 + 3 * radius);

@@ -72,13 +72,13 @@ public class PixelRGB {
 		}
 		
 		int intRgb = 0;
-		intRgb |= alpha & 0x000000FF;
+		intRgb |= alpha & 0xFF;
 		intRgb <<= 8;
-		intRgb |= red & 0x000000FF;
+		intRgb |= red & 0xFF;
 		intRgb <<= 8;
-		intRgb |= green & 0x000000FF;
+		intRgb |= green & 0xFF;
 		intRgb <<= 8;
-		intRgb |= blue & 0x000000FF;
+		intRgb |= blue & 0xFF;
 		
 		return intRgb;
 	}

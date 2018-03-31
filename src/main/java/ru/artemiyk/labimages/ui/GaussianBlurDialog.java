@@ -19,13 +19,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ru.artemiyk.labimages.LabImages;
-import ru.artemiyk.labimages.filter.EProgressState;
-import ru.artemiyk.labimages.filter.FilterApplyer;
-import ru.artemiyk.labimages.filter.GaussianKernel;
-import ru.artemiyk.labimages.filter.KernelComponent;
-import ru.artemiyk.labimages.filter.ProgressListener;
+import ru.artemiyk.labimages.action.EProgressState;
+import ru.artemiyk.labimages.action.ProgressListener;
+import ru.artemiyk.labimages.action.filter.FilterApplyer;
+import ru.artemiyk.labimages.action.filter.GaussianKernel;
+import ru.artemiyk.labimages.action.filter.KernelComponent;
 
-public class GaussianBlurDialog extends JDialog {
+public class GaussianBlurDialog extends JDialog implements IFilterDialog {
 	private static final long serialVersionUID = 1L;
 
 	private IntegerParameterPanel radiusPanel;
@@ -185,12 +185,24 @@ public class GaussianBlurDialog extends JDialog {
 
 				LabImages.getInstance().getMainWindow().getImagePanel().repaint();
 			}
+			
+			@Override
+			public void rangeChanged(int minimum, int maximum) {
+				progressBar.setMinimum(minimum);
+				progressBar.setMaximum(maximum);
+				progressBar.setValue(minimum);
+			}
+
+			@Override
+			public void showProgress(boolean show) {
+				// TODO Auto-generated method stub
+				
+			}
 		});
 
 		filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eVertical));
 		filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eHorizontal));
-		// filterApplyer.addKernel(new GaussianKernel(radius,
-		// KernelComponent.eHorizontalandVertical));
+		//filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eHorizontalandVertical));
 
 		filterApplyer.start();
 

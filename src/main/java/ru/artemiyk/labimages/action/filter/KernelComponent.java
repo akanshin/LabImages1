@@ -1,4 +1,4 @@
-package ru.artemiyk.labimages.filter;
+package ru.artemiyk.labimages.action.filter;
 
 public enum KernelComponent {
 	eHorizontal, eVertical, eHorizontalandVertical

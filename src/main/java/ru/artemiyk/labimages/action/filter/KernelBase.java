@@ -1,4 +1,4 @@
-package ru.artemiyk.labimages.filter;
+package ru.artemiyk.labimages.action.filter;
 
 public abstract class KernelBase {
 	private int kernelCenterX;
@@ -9,8 +9,10 @@ public abstract class KernelBase {
 	private boolean isGrayscale = false;
 	private boolean isNormalize = true;
 
-	public KernelBase() {
+	private ColorModel colorModel;
 
+	public KernelBase(ColorModel colorModel) {
+		this.colorModel = colorModel;
 	}
 
 	protected abstract void fillKernel();
@@ -51,7 +53,7 @@ public abstract class KernelBase {
 	}
 
 	public double getValue(int x, int y) {
-		return kernel[kernelCenterX + x][kernelCenterY + y];
+			return kernel[kernelCenterX + x][kernelCenterY + y];
 	}
 
 	protected void setValue(int x, int y, double val) {
@@ -87,6 +89,10 @@ public abstract class KernelBase {
 		return (kernelSumm > Double.MIN_VALUE || kernelSumm < -Double.MIN_VALUE) ? kernelSumm : 1.0;
 	}
 
+	public ColorModel getColorModel() {
+		return colorModel;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -94,7 +100,7 @@ public abstract class KernelBase {
 
 		for (int y = begin(1); y <= end(1); y++) {
 			if (y != begin(1)) {
-				builder.append(" , ");
+				builder.append(",\n  ");
 			}
 
 			builder.append("{");

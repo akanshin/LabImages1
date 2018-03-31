@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -18,15 +19,17 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ru.artemiyk.labimages.LabImages;
-import ru.artemiyk.labimages.filter.EProgressState;
-import ru.artemiyk.labimages.filter.FilterApplyer;
-import ru.artemiyk.labimages.filter.ProgressListener;
-import ru.artemiyk.labimages.filter.SobelKernel;
+import ru.artemiyk.labimages.action.EProgressState;
+import ru.artemiyk.labimages.action.ProgressListener;
+import ru.artemiyk.labimages.action.filter.FilterApplyer;
+import ru.artemiyk.labimages.action.filter.SobelKernel;
+import ru.artemiyk.labimages.action.filter.SobelKernel2;
 
-public class SobelFilterDialog extends JDialog {
+public class SobelFilterDialog extends JDialog implements IFilterDialog {
 	private static final long serialVersionUID = 1L;
 	
 	private IntegerParameterPanel anglePanel;
+	private JCheckBox doubleSobelBox;
 	
 	private int dialogWidth = 406;
 	private int dialogHeight = 128;
@@ -47,6 +50,8 @@ public class SobelFilterDialog extends JDialog {
 	private boolean applying = false;
 	
 	private Color background = Color.WHITE;
+	
+	private boolean doubleSobel = false;
 
 	public SobelFilterDialog() {
 		super(LabImages.getInstance().getMainWindow(), true);
@@ -63,7 +68,7 @@ public class SobelFilterDialog extends JDialog {
 		Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
 		int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
 		int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
-		setBounds(dialogX, dialogY, dialogWidth, dialogHeight);
+		setBounds(dialogX, dialogY, 406, 136);
 		
 		setResizable(false);
 
@@ -72,6 +77,17 @@ public class SobelFilterDialog extends JDialog {
 		anglePanel = new IntegerParameterPanel("Angle", angle, angleDefault, angleMinimum, angleMaximum, angleStep);
 		getContentPane().add(anglePanel, BorderLayout.CENTER);
 		anglePanel.setBackground(background);
+		
+		doubleSobelBox = new JCheckBox("Double sobel");
+		doubleSobelBox.setBackground(background);
+		doubleSobelBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				doubleSobel = doubleSobelBox.isSelected();
+				calculate();
+			}
+		});
+		doubleSobelBox.setBounds(6, 46, 97, 23);
+		anglePanel.add(doubleSobelBox);
 		anglePanel.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
@@ -183,9 +199,22 @@ public class SobelFilterDialog extends JDialog {
 				
 				LabImages.getInstance().getMainWindow().getImagePanel().repaint();
 			}
+			
+			@Override
+			public void rangeChanged(int minimum, int maximum) {
+				progressBar.setMinimum(minimum);
+				progressBar.setMaximum(maximum);
+				progressBar.setValue(minimum);
+			}
+
+			@Override
+			public void showProgress(boolean show) {
+				// TODO Auto-generated method stub
+				
+			}
 		});
 		
-		filterApplyer.addKernel(new SobelKernel((double) angle));
+		filterApplyer.addKernel(doubleSobel ? new SobelKernel2((double) angle) : new SobelKernel((double) angle));
 
 		filterApplyer.start();
 		

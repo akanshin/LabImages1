@@ -20,12 +20,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ru.artemiyk.labimages.LabImages;
-import ru.artemiyk.labimages.filter.EProgressState;
-import ru.artemiyk.labimages.filter.FilterApplyer;
-import ru.artemiyk.labimages.filter.GaborKernel;
-import ru.artemiyk.labimages.filter.ProgressListener;
+import ru.artemiyk.labimages.action.EProgressState;
+import ru.artemiyk.labimages.action.ProgressListener;
+import ru.artemiyk.labimages.action.filter.FilterApplyer;
+import ru.artemiyk.labimages.action.filter.GaborKernel;
+import ru.artemiyk.labimages.action.filter.KernelBase;
 
-public class GaborFilterDialog extends JDialog {
+public class GaborFilterDialog extends JDialog implements IFilterDialog {
 	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
 
@@ -83,7 +84,7 @@ public class GaborFilterDialog extends JDialog {
 	private static final int kernelSizeDefault = 1;
 	private static final int kernelSizeMinimum = 1;
 	private static final int kernelSizeMaximum = 201;
-	private static final int kernelSizeStep = 1;
+	private static final int kernelSizeStep = 2;
 
 	public static void main(String[] args) {
 		new GaborFilterDialog();
@@ -284,9 +285,26 @@ public class GaborFilterDialog extends JDialog {
 
 				LabImages.getInstance().getMainWindow().getImagePanel().repaint();
 			}
+
+			@Override
+			public void rangeChanged(int minimum, int maximum) {
+				progressBar.setMinimum(minimum);
+				progressBar.setMaximum(maximum);
+				progressBar.setValue(minimum);
+			}
+
+			@Override
+			public void showProgress(boolean show) {
+				// TODO Auto-generated method stub
+				
+			}
 		});
 
-		filterApplyer.addKernel(new GaborKernel(lambda, theta, psi, sigma, gamma, kernelSize));
+		KernelBase kernel = new GaborKernel(lambda, theta, psi, sigma, gamma, kernelSize);
+		
+		//System.out.println(kernel.toString() + "\n");
+		
+		filterApplyer.addKernel(kernel);
 
 		filterApplyer.start();
 

@@ -14,11 +14,18 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import ru.artemiyk.labimages.action.Action;
+import ru.artemiyk.labimages.action.EProgressState;
+import ru.artemiyk.labimages.action.ProgressListener;
+import ru.artemiyk.labimages.action.filter.FilterAction;
+import ru.artemiyk.labimages.action.segmentation.MeanShiftAction;
+import ru.artemiyk.labimages.action.segmentation.SplitAndMergeAction;
 
 public class MainWindow extends JFrame {
 	/**
@@ -48,6 +55,8 @@ public class MainWindow extends JFrame {
 	private JButton sobelFilterButton;
 	private JButton setDefaultImageButton;
 	private JButton selectAllButton;
+	private JButton splitAndMergeButton;
+	private JButton meanShiftButton;
 	private JButton questionButton;
 
 	private File lastOpennedFile;
@@ -200,7 +209,7 @@ public class MainWindow extends JFrame {
 		gaussianBlurButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gaussian_blur.png")));
 		gaussianBlurButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.showGaussianBlurDialog();
+				imagePanel.produceAction(new FilterAction(new GaussianBlurDialog()));
 			}
 		});
 
@@ -211,7 +220,7 @@ public class MainWindow extends JFrame {
 		gaborFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gabor_filter.png")));
 		gaborFilterButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.showGaborFilterDialog();
+				imagePanel.produceAction(new FilterAction(new GaborFilterDialog()));
 			}
 		});
 
@@ -222,7 +231,7 @@ public class MainWindow extends JFrame {
 		sobelFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("sobel_filter.png")));
 		sobelFilterButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.showSobelFilterDialog();
+				imagePanel.produceAction(new FilterAction(new SobelFilterDialog()));
 			}
 		});
 
@@ -237,6 +246,96 @@ public class MainWindow extends JFrame {
 			}
 		});
 
+		toolBar.addSeparator();
+		
+		splitAndMergeButton = new JButton();
+		splitAndMergeButton.setBackground(toolBarColor);
+		splitAndMergeButton.setToolTipText("Split and Merge");
+		toolBar.add(splitAndMergeButton);
+		splitAndMergeButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("split_and_merge.png")));
+		splitAndMergeButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				Action action = new SplitAndMergeAction();
+				action.addProgressListener(new ProgressListener() {
+					@Override
+					public void progressChanged(EProgressState progressState) {
+						inc();
+					}
+
+					private synchronized void inc() {
+						int val = statusBar.getProgressBar().getValue();
+						if (val >= statusBar.getProgressBar().getMaximum()) {
+							return;
+						}
+						val++;
+						statusBar.getProgressBar().setValue(val);
+					}
+					
+					@Override
+					public void rangeChanged(int minimum, int maximum) {
+						statusBar.getProgressBar().setMinimum(minimum);
+						statusBar.getProgressBar().setMaximum(maximum);
+						statusBar.getProgressBar().setValue(minimum);
+					}
+
+					@Override
+					public void showProgress(boolean show) {
+						splitAndMergeButton.setEnabled(!show);
+						statusBar.getProgressBar().setVisible(show);
+						if (!show) {
+							imagePanel.repaint();
+						}
+					}
+				});
+				
+				imagePanel.produceAction(action);
+			}
+		});
+		
+		meanShiftButton = new JButton();
+		meanShiftButton.setBackground(toolBarColor);
+		meanShiftButton.setToolTipText("Mean shift");
+		toolBar.add(meanShiftButton);
+		meanShiftButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("mean_shift.png")));
+		meanShiftButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				Action action = new MeanShiftAction();
+				action.addProgressListener(new ProgressListener() {
+					@Override
+					public void progressChanged(EProgressState progressState) {
+						inc();
+					}
+
+					private synchronized void inc() {
+						int val = statusBar.getProgressBar().getValue();
+						if (val >= statusBar.getProgressBar().getMaximum()) {
+							return;
+						}
+						val++;
+						statusBar.getProgressBar().setValue(val);
+					}
+					
+					@Override
+					public void rangeChanged(int minimum, int maximum) {
+						statusBar.getProgressBar().setMinimum(minimum);
+						statusBar.getProgressBar().setMaximum(maximum);
+						statusBar.getProgressBar().setValue(minimum);
+					}
+
+					@Override
+					public void showProgress(boolean show) {
+						meanShiftButton.setEnabled(!show);
+						statusBar.getProgressBar().setVisible(show);
+						if (!show) {
+							imagePanel.repaint();
+						}
+					}
+				});
+				
+				imagePanel.produceAction(action);
+			}
+		});
+		
 		toolBar.addSeparator();
 
 		questionButton = new JButton();

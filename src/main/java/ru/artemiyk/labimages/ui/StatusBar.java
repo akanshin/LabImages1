@@ -6,6 +6,7 @@ import java.awt.SystemColor;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 
 import ru.artemiyk.labimages.pixelutils.PixelCIELAB;
 import ru.artemiyk.labimages.pixelutils.PixelHSV;
@@ -14,6 +15,8 @@ import ru.artemiyk.labimages.pixelutils.PixelRGB;
 public class StatusBar extends JPanel {
 	private static final long serialVersionUID = 1L;
 
+	private JProgressBar progressBar;
+	
 	private JLabel mouseValue;
 	private JLabel selectionValue;
 
@@ -26,9 +29,10 @@ public class StatusBar extends JPanel {
 	 */
 	public StatusBar() {
 		setPreferredSize(new Dimension(10, 23));
-		setLayout(new GridLayout(0, 5, 0, 0));
+		GridLayout layout = new GridLayout(0, 6, 0, 0);
+		setLayout(layout);
 		setBackground(SystemColor.control);
-
+		
 		mouseValue = new JLabel("Ready");
 		this.add(mouseValue);
 
@@ -43,7 +47,12 @@ public class StatusBar extends JPanel {
 
 		valueLAB = new JLabel("");
 		this.add(valueLAB);
-
+		
+		progressBar = new JProgressBar();
+		progressBar.setStringPainted(true);
+		progressBar.setVisible(false);
+		this.add(progressBar);
+		
 		this.setOpaque(false);
 	}
 
@@ -90,5 +99,13 @@ public class StatusBar extends JPanel {
 		valueRGB.setText("");
 		valueHSV.setText("");
 		valueLAB.setText("");
+	}
+
+	public JProgressBar getProgressBar() {
+		return progressBar;
+	}
+
+	public void setProgressBar(JProgressBar progressBar) {
+		this.progressBar = progressBar;
 	}
 }
