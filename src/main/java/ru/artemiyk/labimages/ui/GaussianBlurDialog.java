@@ -26,206 +26,205 @@ import ru.artemiyk.labimages.action.filter.GaussianKernel;
 import ru.artemiyk.labimages.action.filter.KernelComponent;
 
 public class GaussianBlurDialog extends JDialog implements IFilterDialog {
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	private IntegerParameterPanel radiusPanel;
+  private IntegerParameterPanel radiusPanel;
 
-	private int dialogWidth = 406;
-	private int dialogHeight = 128;
+  private int dialogWidth = 406;
+  private int dialogHeight = 128;
 
-	private int radius = radiusDefault;
-	private static final int radiusDefault = 2;
-	private static final int radiusMinimum = 0;
-	private static final int radiusMaximum = 100;
-	private static final int radiusStep = 1;
+  private int radius = radiusDefault;
+  private static final int radiusDefault = 2;
+  private static final int radiusMinimum = 0;
+  private static final int radiusMaximum = 100;
+  private static final int radiusStep = 1;
 
-	private JProgressBar progressBar;
+  private JProgressBar progressBar;
 
-	private BufferedImage imageToRead;
-	private BufferedImage imageToWrite;
+  private BufferedImage imageToRead;
+  private BufferedImage imageToWrite;
 
-	private FilterApplyer filterApplyer;
-	private boolean disposeOnFinish = false;
-	private boolean applying = false;
+  private FilterApplyer filterApplyer;
+  private boolean disposeOnFinish = false;
+  private boolean applying = false;
 
-	private Color background = Color.WHITE;
+  private Color background = Color.WHITE;
 
-	public GaussianBlurDialog() {
-		super(LabImages.getInstance().getMainWindow(), true);
+  public GaussianBlurDialog() {
+    super(LabImages.getInstance().getMainWindow(), true);
 
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Gaussian filter");
-		try {
-			setIconImage(
-					ImageIO.read(new File(getClass().getClassLoader().getResource("gaussian_blur.png").getFile())));
-		} catch (Exception ex) {
+    setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    setTitle("Gaussian filter");
+    try {
+      setIconImage(ImageIO.read(new File(getClass().getClassLoader().getResource("gaussian_blur.png").getFile())));
+    } catch (Exception ex) {
 
-		}
+    }
 
-		Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
-		int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
-		int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
-		setBounds(dialogX, dialogY, 406, 120);
+    Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
+    int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
+    int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
+    setBounds(dialogX, dialogY, 406, 120);
 
-		setResizable(false);
-		getContentPane().setLayout(new BorderLayout());
+    setResizable(false);
+    getContentPane().setLayout(new BorderLayout());
 
-		radiusPanel = new IntegerParameterPanel("Radius", radius, radiusDefault, radiusMinimum, radiusMaximum,
-				radiusStep);
-		getContentPane().add(radiusPanel, BorderLayout.CENTER);
-		radiusPanel.setBackground(background);
-		radiusPanel.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				radius = radiusPanel.getValue();
-				calculate();
-			}
-		});
+    radiusPanel = new IntegerParameterPanel("Radius", radius, radiusDefault, radiusMinimum, radiusMaximum, radiusStep);
+    getContentPane().add(radiusPanel, BorderLayout.CENTER);
+    radiusPanel.setBackground(background);
+    radiusPanel.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent arg0) {
+        radius = radiusPanel.getValue();
+        calculate();
+      }
+    });
 
-		JPanel buttonPane = new JPanel();
-		buttonPane.setBackground(background);
-		getContentPane().add(buttonPane, BorderLayout.SOUTH);
-		buttonPane.setLayout(new BorderLayout(0, 0));
+    JPanel buttonPane = new JPanel();
+    buttonPane.setBackground(background);
+    getContentPane().add(buttonPane, BorderLayout.SOUTH);
+    buttonPane.setLayout(new BorderLayout(0, 0));
 
-		progressBar = new JProgressBar();
-		progressBar.setBackground(background);
-		progressBar.setMinimumSize(new Dimension(10, 14));
-		progressBar.setMaximumSize(new Dimension(32767, 14));
-		progressBar.setIndeterminate(true);
-		progressBar.setVisible(false);
-		buttonPane.add(progressBar);
+    progressBar = new JProgressBar();
+    progressBar.setBackground(background);
+    progressBar.setMinimumSize(new Dimension(10, 14));
+    progressBar.setMaximumSize(new Dimension(32767, 14));
+    progressBar.setIndeterminate(true);
+    progressBar.setVisible(false);
+    buttonPane.add(progressBar);
 
-		JPanel panel = new JPanel();
-		panel.setBackground(background);
-		buttonPane.add(panel, BorderLayout.EAST);
+    JPanel panel = new JPanel();
+    panel.setBackground(background);
+    buttonPane.add(panel, BorderLayout.EAST);
 
-		JButton okButton = new JButton("OK");
-		okButton.setBackground(background);
-		panel.add(okButton);
-		okButton.setActionCommand("OK");
-		getRootPane().setDefaultButton(okButton);
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				onOk();
-			}
-		});
+    JButton okButton = new JButton("OK");
+    okButton.setBackground(background);
+    panel.add(okButton);
+    okButton.setActionCommand("OK");
+    getRootPane().setDefaultButton(okButton);
+    okButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent arg0) {
+        onOk();
+      }
+    });
 
-		JButton cancelButton = new JButton("Cancel");
-		cancelButton.setBackground(background);
-		panel.add(cancelButton);
-		cancelButton.setActionCommand("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				onCancel();
-			}
-		});
-	}
+    JButton cancelButton = new JButton("Cancel");
+    cancelButton.setBackground(background);
+    panel.add(cancelButton);
+    cancelButton.setActionCommand("Cancel");
+    cancelButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent arg0) {
+        onCancel();
+      }
+    });
+  }
 
-	public void setImages(BufferedImage imageToRead, BufferedImage imageToWrite) {
-		this.imageToRead = imageToRead;
-		this.imageToWrite = imageToWrite;
+  public void setImages(BufferedImage imageToRead, BufferedImage imageToWrite) {
+    this.imageToRead = imageToRead;
+    this.imageToWrite = imageToWrite;
 
-		progressBar.setMinimum(0);
-		progressBar.setMaximum(4 * imageToRead.getHeight());
+    progressBar.setMinimum(0);
+    progressBar.setMaximum(4 * imageToRead.getHeight());
 
-		calculate();
-	}
+    calculate();
+  }
 
-	private void onOk() {
-		progressBar.setIndeterminate(false);
-		disposeOnFinish = true;
-		if (!applying) {
-			dispose();
-		}
-	}
+  private void onOk() {
+    progressBar.setIndeterminate(false);
+    disposeOnFinish = true;
+    if (!applying) {
+      dispose();
+    }
+  }
 
-	private void onCancel() {
-		this.dispose();
+  private void onCancel() {
+    this.dispose();
 
-		progressBar.setVisible(false);
+    progressBar.setVisible(false);
 
-		LabImages.getInstance().getMainWindow().getImagePanel().revertImageFilterChanges();
-	}
+    LabImages.getInstance().getMainWindow().getImagePanel().revertImageFilterChanges();
+  }
 
-	private synchronized void progressIncrement() {
-		int val = progressBar.getValue();
-		val++;
-		if (progressBar.getMaximum() > val) {
-			progressBar.setValue(val);
-		}
-	}
+  private synchronized void progressIncrement() {
+    int val = progressBar.getValue();
+    val++;
+    if (progressBar.getMaximum() > val) {
+      progressBar.setValue(val);
+    }
+  }
 
-	private void calculate() {
-		if (filterApplyer != null) {
-			filterApplyer.interrupt();
-			try {
-				filterApplyer.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+  private void calculate() {
+    if (filterApplyer != null) {
+      filterApplyer.interrupt();
+      try {
+        filterApplyer.join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
 
-		filterApplyer = new FilterApplyer();
-		filterApplyer.setThreadPool(Executors.newFixedThreadPool(LabImages.THREAD_COUNT));
-		filterApplyer.setImageToRead(imageToRead);
-		filterApplyer.setImageToWrite(imageToWrite);
-		filterApplyer.addProgressListener(new ProgressListener() {
-			@Override
-			public void progressChanged(EProgressState progressState) {
-				progressIncrement();
+    filterApplyer = new FilterApplyer();
+    filterApplyer.setThreadPool(Executors.newFixedThreadPool(LabImages.THREAD_COUNT));
+    filterApplyer.setImageToRead(imageToRead);
+    filterApplyer.setImageToWrite(imageToWrite);
+    filterApplyer.addProgressListener(new ProgressListener() {
+      @Override
+      public void progressChanged(EProgressState progressState) {
+        progressIncrement();
 
-				progressBar.setStringPainted(true);
-				if (progressState == EProgressState.eNormalizing) {
-					progressBar.setString("Normalizing");
-				} else if (progressState == EProgressState.eApplying) {
-					progressBar.setString("Applying");
-				}
+        progressBar.setStringPainted(true);
+        if (progressState == EProgressState.eNormalizing) {
+          progressBar.setString("Normalizing");
+        } else if (progressState == EProgressState.eApplying) {
+          progressBar.setString("Applying");
+        }
 
-				LabImages.getInstance().getMainWindow().getImagePanel().repaint();
-			}
-			
-			@Override
-			public void rangeChanged(int minimum, int maximum) {
-				progressBar.setMinimum(minimum);
-				progressBar.setMaximum(maximum);
-				progressBar.setValue(minimum);
-			}
+        LabImages.getInstance().getMainWindow().getImagePanel().repaint();
+      }
 
-			@Override
-			public void showProgress(boolean show) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
+      @Override
+      public void rangeChanged(int minimum, int maximum) {
+        progressBar.setMinimum(minimum);
+        progressBar.setMaximum(maximum);
+        progressBar.setValue(minimum);
+      }
 
-		filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eVertical));
-		filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eHorizontal));
-		//filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eHorizontalandVertical));
+      @Override
+      public void showProgress(boolean show) {
+        // TODO Auto-generated method stub
 
-		filterApplyer.start();
+      }
+    });
 
-		Thread thread = new Thread() {
-			@Override
-			public void run() {
-				applying = true;
-				try {
-					progressBar.setValue(0);
-					progressBar.setVisible(true);
-					filterApplyer.join();
-					progressBar.setVisible(false);
-				} catch (InterruptedException e) {
+    filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eVertical));
+    filterApplyer.addKernel(new GaussianKernel(radius, KernelComponent.eHorizontal));
+    // filterApplyer.addKernel(new GaussianKernel(radius,
+    // KernelComponent.eHorizontalandVertical));
 
-				}
+    filterApplyer.start();
 
-				applying = false;
+    Thread thread = new Thread() {
+      @Override
+      public void run() {
+        applying = true;
+        try {
+          progressBar.setValue(0);
+          progressBar.setVisible(true);
+          filterApplyer.join();
+          progressBar.setVisible(false);
+        } catch (InterruptedException e) {
 
-				if (disposeOnFinish) {
-					GaussianBlurDialog.this.dispose();
-				}
-			}
-		};
-		thread.start();
-	}
+        }
+
+        applying = false;
+
+        if (disposeOnFinish) {
+          GaussianBlurDialog.this.dispose();
+        }
+      }
+    };
+    thread.start();
+  }
 }

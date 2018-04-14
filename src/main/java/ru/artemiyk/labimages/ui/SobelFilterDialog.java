@@ -26,218 +26,217 @@ import ru.artemiyk.labimages.action.filter.SobelKernel;
 import ru.artemiyk.labimages.action.filter.SobelKernel2;
 
 public class SobelFilterDialog extends JDialog implements IFilterDialog {
-	private static final long serialVersionUID = 1L;
-	
-	private IntegerParameterPanel anglePanel;
-	private JCheckBox doubleSobelBox;
-	
-	private int dialogWidth = 406;
-	private int dialogHeight = 128;
+  private static final long serialVersionUID = 1L;
 
-	private int angle = angleDefault;
-	private static final int angleDefault = 0;
-	private static final int angleMinimum = 0;
-	private static final int angleMaximum = 360;
-	private static final int angleStep = 1;
+  private IntegerParameterPanel anglePanel;
+  private JCheckBox doubleSobelBox;
 
-	private JProgressBar progressBar;
-	
-	private BufferedImage imageToRead;
-	private BufferedImage imageToWrite;
-	
-	private FilterApplyer filterApplyer;
-	private boolean disposeOnFinish = false;
-	private boolean applying = false;
-	
-	private Color background = Color.WHITE;
-	
-	private boolean doubleSobel = false;
+  private int dialogWidth = 406;
+  private int dialogHeight = 128;
 
-	public SobelFilterDialog() {
-		super(LabImages.getInstance().getMainWindow(), true);
-		
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Sobel filter");
-		try {
-			setIconImage(
-					ImageIO.read(new File(getClass().getClassLoader().getResource("sobel_filter.png").getFile())));
-		} catch (Exception ex) {
+  private int angle = angleDefault;
+  private static final int angleDefault = 0;
+  private static final int angleMinimum = 0;
+  private static final int angleMaximum = 360;
+  private static final int angleStep = 1;
 
-		}
-		
-		Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
-		int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
-		int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
-		setBounds(dialogX, dialogY, 406, 136);
-		
-		setResizable(false);
+  private JProgressBar progressBar;
 
-		getContentPane().setLayout(new BorderLayout());
-		
-		anglePanel = new IntegerParameterPanel("Angle", angle, angleDefault, angleMinimum, angleMaximum, angleStep);
-		getContentPane().add(anglePanel, BorderLayout.CENTER);
-		anglePanel.setBackground(background);
-		
-		doubleSobelBox = new JCheckBox("Double sobel");
-		doubleSobelBox.setBackground(background);
-		doubleSobelBox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				doubleSobel = doubleSobelBox.isSelected();
-				calculate();
-			}
-		});
-		doubleSobelBox.setBounds(6, 46, 97, 23);
-		anglePanel.add(doubleSobelBox);
-		anglePanel.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				angle = anglePanel.getValue();
-				calculate();
-			}
-		});
+  private BufferedImage imageToRead;
+  private BufferedImage imageToWrite;
 
-		JPanel buttonPane = new JPanel();
-		buttonPane.setBackground(background);
-		getContentPane().add(buttonPane, BorderLayout.SOUTH);
-		buttonPane.setLayout(new BorderLayout(0, 0));
-		
-		JPanel panel = new JPanel();
-		panel.setBackground(background);
-		buttonPane.add(panel, BorderLayout.EAST);
+  private FilterApplyer filterApplyer;
+  private boolean disposeOnFinish = false;
+  private boolean applying = false;
 
-		JButton okButton = new JButton("OK");
-		panel.add(okButton);
-		okButton.setBackground(background);
-		okButton.setActionCommand("OK");
-		getRootPane().setDefaultButton(okButton);
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				onOk();
-			}
-		});
+  private Color background = Color.WHITE;
 
-		JButton cancelButton = new JButton("Cancel");
-		cancelButton.setBackground(background);
-		panel.add(cancelButton);
-		cancelButton.setActionCommand("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				onCancel();
-			}
-		});
-		
-		progressBar = new JProgressBar();
-		progressBar.setBackground(background);
-		progressBar.setIndeterminate(true);
-		progressBar.setVisible(false);
-		buttonPane.add(progressBar, BorderLayout.CENTER);
+  private boolean doubleSobel = false;
 
-	}
-	
-	public void setImages(BufferedImage imageToRead, BufferedImage imageToWrite) {
-		this.imageToRead = imageToRead;
-		this.imageToWrite = imageToWrite;
+  public SobelFilterDialog() {
+    super(LabImages.getInstance().getMainWindow(), true);
 
-		progressBar.setMinimum(0);
-		progressBar.setMaximum(2 * imageToRead.getHeight());
+    setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    setTitle("Sobel filter");
+    try {
+      setIconImage(ImageIO.read(new File(getClass().getClassLoader().getResource("sobel_filter.png").getFile())));
+    } catch (Exception ex) {
 
-		calculate();
-	}
-	
-	private void onOk() {
-		progressBar.setIndeterminate(false);
-		disposeOnFinish = true;
-		if (!applying) {
-			dispose();
-		}
-	}
+    }
 
-	private void onCancel() {
-		this.dispose();
+    Rectangle mainWindowRect = LabImages.getInstance().getMainWindow().getBounds();
+    int dialogX = mainWindowRect.x + mainWindowRect.width / 2 - dialogWidth / 2;
+    int dialogY = mainWindowRect.y + mainWindowRect.height / 2 - dialogHeight / 2;
+    setBounds(dialogX, dialogY, 406, 136);
 
-		progressBar.setVisible(false);
+    setResizable(false);
 
-		LabImages.getInstance().getMainWindow().getImagePanel().revertImageFilterChanges();
-	}
+    getContentPane().setLayout(new BorderLayout());
 
-	private synchronized void progressIncrement() {
-		int val = progressBar.getValue();
-		val++;
-		if (progressBar.getMaximum() > val) {
-			progressBar.setValue(val);
-		}
-	}
+    anglePanel = new IntegerParameterPanel("Angle", angle, angleDefault, angleMinimum, angleMaximum, angleStep);
+    getContentPane().add(anglePanel, BorderLayout.CENTER);
+    anglePanel.setBackground(background);
 
-	private void calculate() {
-		if (filterApplyer != null) {
-			filterApplyer.interrupt();
-			try {
-				filterApplyer.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		filterApplyer = new FilterApplyer();
-		filterApplyer.setThreadPool(Executors.newFixedThreadPool(LabImages.THREAD_COUNT));
-		filterApplyer.setImageToRead(imageToRead);
-		filterApplyer.setImageToWrite(imageToWrite);
-		filterApplyer.addProgressListener(new ProgressListener() {
-			@Override
-			public void progressChanged(EProgressState progressState) {
-				progressIncrement();
-				
-				progressBar.setStringPainted(true);
-				if (progressState == EProgressState.eNormalizing) {
-					progressBar.setString("Normalizing");
-				} else if (progressState == EProgressState.eApplying) {
-					progressBar.setString("Applying");
-				}
-				
-				LabImages.getInstance().getMainWindow().getImagePanel().repaint();
-			}
-			
-			@Override
-			public void rangeChanged(int minimum, int maximum) {
-				progressBar.setMinimum(minimum);
-				progressBar.setMaximum(maximum);
-				progressBar.setValue(minimum);
-			}
+    doubleSobelBox = new JCheckBox("Double sobel");
+    doubleSobelBox.setBackground(background);
+    doubleSobelBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        doubleSobel = doubleSobelBox.isSelected();
+        calculate();
+      }
+    });
+    doubleSobelBox.setBounds(6, 46, 97, 23);
+    anglePanel.add(doubleSobelBox);
+    anglePanel.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent arg0) {
+        angle = anglePanel.getValue();
+        calculate();
+      }
+    });
 
-			@Override
-			public void showProgress(boolean show) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-		
-		filterApplyer.addKernel(doubleSobel ? new SobelKernel2((double) angle) : new SobelKernel((double) angle));
+    JPanel buttonPane = new JPanel();
+    buttonPane.setBackground(background);
+    getContentPane().add(buttonPane, BorderLayout.SOUTH);
+    buttonPane.setLayout(new BorderLayout(0, 0));
 
-		filterApplyer.start();
-		
-		Thread thread = new Thread() {
-			@Override
-			public void run() {
-				applying = true;
-				try {
-					progressBar.setValue(0);
-					progressBar.setVisible(true);
-					filterApplyer.join();
-					progressBar.setVisible(false);
-				} catch (InterruptedException e) {
-					
-				}
-				
-				applying = false;
-				
-				if (disposeOnFinish) {
-					SobelFilterDialog.this.dispose();
-				}
-			}
-		};
-		thread.start();
-	}
+    JPanel panel = new JPanel();
+    panel.setBackground(background);
+    buttonPane.add(panel, BorderLayout.EAST);
+
+    JButton okButton = new JButton("OK");
+    panel.add(okButton);
+    okButton.setBackground(background);
+    okButton.setActionCommand("OK");
+    getRootPane().setDefaultButton(okButton);
+    okButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent arg0) {
+        onOk();
+      }
+    });
+
+    JButton cancelButton = new JButton("Cancel");
+    cancelButton.setBackground(background);
+    panel.add(cancelButton);
+    cancelButton.setActionCommand("Cancel");
+    cancelButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent arg0) {
+        onCancel();
+      }
+    });
+
+    progressBar = new JProgressBar();
+    progressBar.setBackground(background);
+    progressBar.setIndeterminate(true);
+    progressBar.setVisible(false);
+    buttonPane.add(progressBar, BorderLayout.CENTER);
+
+  }
+
+  public void setImages(BufferedImage imageToRead, BufferedImage imageToWrite) {
+    this.imageToRead = imageToRead;
+    this.imageToWrite = imageToWrite;
+
+    progressBar.setMinimum(0);
+    progressBar.setMaximum(2 * imageToRead.getHeight());
+
+    calculate();
+  }
+
+  private void onOk() {
+    progressBar.setIndeterminate(false);
+    disposeOnFinish = true;
+    if (!applying) {
+      dispose();
+    }
+  }
+
+  private void onCancel() {
+    this.dispose();
+
+    progressBar.setVisible(false);
+
+    LabImages.getInstance().getMainWindow().getImagePanel().revertImageFilterChanges();
+  }
+
+  private synchronized void progressIncrement() {
+    int val = progressBar.getValue();
+    val++;
+    if (progressBar.getMaximum() > val) {
+      progressBar.setValue(val);
+    }
+  }
+
+  private void calculate() {
+    if (filterApplyer != null) {
+      filterApplyer.interrupt();
+      try {
+        filterApplyer.join();
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+
+    filterApplyer = new FilterApplyer();
+    filterApplyer.setThreadPool(Executors.newFixedThreadPool(LabImages.THREAD_COUNT));
+    filterApplyer.setImageToRead(imageToRead);
+    filterApplyer.setImageToWrite(imageToWrite);
+    filterApplyer.addProgressListener(new ProgressListener() {
+      @Override
+      public void progressChanged(EProgressState progressState) {
+        progressIncrement();
+
+        progressBar.setStringPainted(true);
+        if (progressState == EProgressState.eNormalizing) {
+          progressBar.setString("Normalizing");
+        } else if (progressState == EProgressState.eApplying) {
+          progressBar.setString("Applying");
+        }
+
+        LabImages.getInstance().getMainWindow().getImagePanel().repaint();
+      }
+
+      @Override
+      public void rangeChanged(int minimum, int maximum) {
+        progressBar.setMinimum(minimum);
+        progressBar.setMaximum(maximum);
+        progressBar.setValue(minimum);
+      }
+
+      @Override
+      public void showProgress(boolean show) {
+        // TODO Auto-generated method stub
+
+      }
+    });
+
+    filterApplyer.addKernel(doubleSobel ? new SobelKernel2((double) angle) : new SobelKernel((double) angle));
+
+    filterApplyer.start();
+
+    Thread thread = new Thread() {
+      @Override
+      public void run() {
+        applying = true;
+        try {
+          progressBar.setValue(0);
+          progressBar.setVisible(true);
+          filterApplyer.join();
+          progressBar.setVisible(false);
+        } catch (InterruptedException e) {
+
+        }
+
+        applying = false;
+
+        if (disposeOnFinish) {
+          SobelFilterDialog.this.dispose();
+        }
+      }
+    };
+    thread.start();
+  }
 }

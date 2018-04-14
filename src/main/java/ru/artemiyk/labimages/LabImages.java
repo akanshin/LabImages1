@@ -7,37 +7,37 @@ import javax.swing.UIManager;
 import ru.artemiyk.labimages.ui.MainWindow;
 
 public class LabImages {
-	
-	public static final int THREAD_COUNT = 7;
 
-	private static LabImages instance = null;
+  public static final int THREAD_COUNT = 7;
 
-	private MainWindow window = null;
+  private static LabImages instance = null;
 
-	public static void main(String[] args) {
-		LabImages.getInstance();
-	}
+  private MainWindow window = null;
 
-	public LabImages() {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
+  public static void main(String[] args) {
+    LabImages.getInstance();
+  }
 
-		}
+  public LabImages() {
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch (Exception e) {
 
-		this.window = new MainWindow("LabImages 1", 720, 720);
-		this.window.setVisible(true);
-		this.window.getImagePanel().loadImage(new File(getClass().getClassLoader().getResource("lenna.png").getFile()));
-	}
+    }
 
-	public static LabImages getInstance() {
-		if (instance == null) {
-			instance = new LabImages();
-		}
-		return instance;
-	}
+    this.window = new MainWindow("LabImages 1", 720, 720);
+    this.window.setVisible(true);
+    this.window.getImagePanel().loadImage(new File(getClass().getClassLoader().getResource("lenna.png").getFile()));
+  }
 
-	public MainWindow getMainWindow() {
-		return this.window;
-	}
+  public static LabImages getInstance() {
+    if (instance == null) {
+      instance = new LabImages();
+    }
+    return instance;
+  }
+
+  public MainWindow getMainWindow() {
+    return this.window;
+  }
 }

@@ -17,321 +17,320 @@ import ru.artemiyk.labimages.pixelutils.PixelHSV;
 import ru.artemiyk.labimages.pixelutils.PixelRGB;
 
 public class FilterApplyer extends Thread {
-	private List<KernelBase> kernels = new ArrayList<KernelBase>();
+  private List<KernelBase> kernels = new ArrayList<KernelBase>();
 
-	private ExecutorService threadPool;
+  private ExecutorService threadPool;
 
-	private BufferedImage imageToRead;
-	private BufferedImage imageTemp;
-	private BufferedImage imageToWrite;
+  private BufferedImage imageToRead;
+  private BufferedImage imageTemp;
+  private BufferedImage imageToWrite;
 
-	private List<ProgressListener> listeners;
+  private List<ProgressListener> listeners;
 
-	private double rgbMin = 0.0;
-	private double rgbMax = 255.0;
+  private double rgbMin = 0.0;
+  private double rgbMax = 255.0;
 
-	public FilterApplyer() {
-		listeners = new ArrayList<ProgressListener>();
-	}
+  public FilterApplyer() {
+    listeners = new ArrayList<ProgressListener>();
+  }
 
-	public void addProgressListener(ProgressListener progressListener) {
-		listeners.add(progressListener);
-	}
+  public void addProgressListener(ProgressListener progressListener) {
+    listeners.add(progressListener);
+  }
 
-	public void addKernel(KernelBase kernel) {
-		kernels.add(kernel);
-	}
+  public void addKernel(KernelBase kernel) {
+    kernels.add(kernel);
+  }
 
-	public void setThreadPool(ExecutorService threadPool) {
-		this.threadPool = threadPool;
-	}
+  public void setThreadPool(ExecutorService threadPool) {
+    this.threadPool = threadPool;
+  }
 
-	public void setImageToRead(BufferedImage imageToRead) {
-		this.imageToRead = imageToRead;
-		imageTemp = new BufferedImage(imageToRead.getWidth(), imageToRead.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		Graphics g = imageTemp.createGraphics();
-		g.drawImage(imageToRead, 0, 0, null);
-		g.dispose();
-	}
+  public void setImageToRead(BufferedImage imageToRead) {
+    this.imageToRead = imageToRead;
+    imageTemp = new BufferedImage(imageToRead.getWidth(), imageToRead.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics g = imageTemp.createGraphics();
+    g.drawImage(imageToRead, 0, 0, null);
+    g.dispose();
+  }
 
-	public void setImageToWrite(BufferedImage imageToWrite) {
-		this.imageToWrite = imageToWrite;
-	}
+  public void setImageToWrite(BufferedImage imageToWrite) {
+    this.imageToWrite = imageToWrite;
+  }
 
-	public void run() {
-		if (imageToRead == null || imageToWrite == null || kernels.isEmpty()) {
-			return;
-		}
+  public void run() {
+    if (imageToRead == null || imageToWrite == null || kernels.isEmpty()) {
+      return;
+    }
 
-		try {
-			if (threadPool == null) {
-				for (KernelBase kernel : kernels) {
-					singleThreadNormalization(kernel);
-					singleThreadApplying(kernel);
+    try {
+      if (threadPool == null) {
+        for (KernelBase kernel : kernels) {
+          singleThreadNormalization(kernel);
+          singleThreadApplying(kernel);
 
-					Graphics g = imageTemp.createGraphics();
-					g.drawImage(imageToWrite, 0, 0, null);
-					g.dispose();
-				}
-			} else {
-				for (KernelBase kernel : kernels) {
-					multiThreadNormalization(kernel);
-					multiThreadApplying(kernel);
+          Graphics g = imageTemp.createGraphics();
+          g.drawImage(imageToWrite, 0, 0, null);
+          g.dispose();
+        }
+      } else {
+        for (KernelBase kernel : kernels) {
+          multiThreadNormalization(kernel);
+          multiThreadApplying(kernel);
 
-					Graphics g = imageTemp.createGraphics();
-					g.drawImage(imageToWrite, 0, 0, null);
-					g.dispose();
-				}
-			}
-		} catch (InterruptedException e) {
+          Graphics g = imageTemp.createGraphics();
+          g.drawImage(imageToWrite, 0, 0, null);
+          g.dispose();
+        }
+      }
+    } catch (InterruptedException e) {
 
-		}
-	}
+    }
+  }
 
-	private void singleThreadNormalization(KernelBase kernel) throws InterruptedException {
-		
-		if (kernel.getColorModel() == ColorModel.eLAB) {
-			rgbMin = 255.0;
-			rgbMax = 0.0;
-		} else if (kernel.getColorModel() == ColorModel.eRGB) {
-			rgbMin = 0.0;
-			rgbMax = 255.0;
-		}
-		
-		double[] rgba = new double[4];
-		for (int i = 0; i < imageToRead.getHeight(); i++) {
-			for (int j = 0; j < imageToRead.getWidth(); j++) {
-				applyFilter(j, i, rgba, kernel);
+  private void singleThreadNormalization(KernelBase kernel) throws InterruptedException {
 
-				addNormalizedValue(rgba[0]);
-				addNormalizedValue(rgba[1]);
-				addNormalizedValue(rgba[2]);
-				addNormalizedValue(rgba[3]);
-			}
+    if (kernel.getColorModel() == ColorModel.eLAB) {
+      rgbMin = 255.0;
+      rgbMax = 0.0;
+    } else if (kernel.getColorModel() == ColorModel.eRGB) {
+      rgbMin = 0.0;
+      rgbMax = 255.0;
+    }
 
-			for (ProgressListener listener : listeners) {
-				listener.progressChanged(EProgressState.eNormalizing);
-			}
+    double[] rgba = new double[4];
+    for (int i = 0; i < imageToRead.getHeight(); i++) {
+      for (int j = 0; j < imageToRead.getWidth(); j++) {
+        applyFilter(j, i, rgba, kernel);
 
-			if (Thread.interrupted()) {
-				throw new InterruptedException();
-			}
-		}
-	}
+        addNormalizedValue(rgba[0]);
+        addNormalizedValue(rgba[1]);
+        addNormalizedValue(rgba[2]);
+        addNormalizedValue(rgba[3]);
+      }
 
-	private void multiThreadNormalization(KernelBase kernel) throws InterruptedException {
-		List<Future<Void>> futureList = new ArrayList<>();
-		for (int i = 0; i < imageToRead.getHeight(); i++) {
-			final int iClone = i;
+      for (ProgressListener listener : listeners) {
+        listener.progressChanged(EProgressState.eNormalizing);
+      }
 
-			Supplier<Void> supplier = new Supplier<Void>() {
-				public int ii = iClone;
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+    }
+  }
 
-				@Override
-				public Void get() {
-					double[] rgba = new double[4];
+  private void multiThreadNormalization(KernelBase kernel) throws InterruptedException {
+    List<Future<Void>> futureList = new ArrayList<>();
+    for (int i = 0; i < imageToRead.getHeight(); i++) {
+      final int iClone = i;
 
-					for (int jj = 0; jj < imageToRead.getWidth(); jj++) {
-						applyFilter(jj, ii, rgba, kernel);
+      Supplier<Void> supplier = new Supplier<Void>() {
+        public int ii = iClone;
 
-						addNormalizedValue(rgba[0]);
-						addNormalizedValue(rgba[1]);
-						addNormalizedValue(rgba[2]);
-						addNormalizedValue(rgba[3]);
-					}
+        @Override
+        public Void get() {
+          double[] rgba = new double[4];
 
-					for (ProgressListener listener : listeners) {
-						listener.progressChanged(EProgressState.eNormalizing);
-					}
+          for (int jj = 0; jj < imageToRead.getWidth(); jj++) {
+            applyFilter(jj, ii, rgba, kernel);
 
-					return null;
-				}
-			};
+            addNormalizedValue(rgba[0]);
+            addNormalizedValue(rgba[1]);
+            addNormalizedValue(rgba[2]);
+            addNormalizedValue(rgba[3]);
+          }
 
-			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
-		}
+          for (ProgressListener listener : listeners) {
+            listener.progressChanged(EProgressState.eNormalizing);
+          }
 
-		for (Future<Void> future : futureList) {
-			try {
-				future.get();
-			} catch (InterruptedException | ExecutionException e) {
-				threadPool.shutdownNow();
-				throw new InterruptedException();
-			}
+          return null;
+        }
+      };
 
-			if (Thread.interrupted()) {
-				threadPool.shutdownNow();
-				throw new InterruptedException();
-			}
-		}
-	}
+      futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
+    }
 
-	private void normalize(double[] rgba) {
-		double rgbRange = rgbMax - rgbMin;
-		for (int i = 0; i < rgba.length; i++) {
-			rgba[i] = (rgba[i] - rgbMin) / rgbRange * 255.0;
-		}
-	}
+    for (Future<Void> future : futureList) {
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        threadPool.shutdownNow();
+        throw new InterruptedException();
+      }
 
-	private void singleThreadApplying(KernelBase kernel) throws InterruptedException {
-		double[] rgba = new double[4];
-		for (int i = 0; i < imageToRead.getHeight(); i++) {
-			for (int j = 0; j < imageToRead.getWidth(); j++) {
-				applyFilter(j, i, rgba, kernel);
-				normalize(rgba);
-				int rgb = PixelRGB.getRGB(rgba);
-				imageToWrite.setRGB(j, i, rgb);
-			}
+      if (Thread.interrupted()) {
+        threadPool.shutdownNow();
+        throw new InterruptedException();
+      }
+    }
+  }
 
-			for (ProgressListener listener : listeners) {
-				listener.progressChanged(EProgressState.eApplying);
-			}
+  private void normalize(double[] rgba) {
+    double rgbRange = rgbMax - rgbMin;
+    for (int i = 0; i < rgba.length; i++) {
+      rgba[i] = (rgba[i] - rgbMin) / rgbRange * 255.0;
+    }
+  }
 
-			if (Thread.interrupted()) {
-				throw new InterruptedException();
-			}
-		}
-	}
+  private void singleThreadApplying(KernelBase kernel) throws InterruptedException {
+    double[] rgba = new double[4];
+    for (int i = 0; i < imageToRead.getHeight(); i++) {
+      for (int j = 0; j < imageToRead.getWidth(); j++) {
+        applyFilter(j, i, rgba, kernel);
+        normalize(rgba);
+        int rgb = PixelRGB.getRGB(rgba);
+        imageToWrite.setRGB(j, i, rgb);
+      }
 
-	private void multiThreadApplying(KernelBase kernel) throws InterruptedException {
-		List<Future<Void>> futureList = new ArrayList<>();
-		for (int i = 0; i < imageToRead.getHeight(); i++) {
-			final int iClone = i;
+      for (ProgressListener listener : listeners) {
+        listener.progressChanged(EProgressState.eApplying);
+      }
 
-			Supplier<Void> supplier = new Supplier<Void>() {
-				public int ii = iClone;
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+    }
+  }
 
-				@Override
-				public Void get() {
-					double[] rgba = new double[4];
+  private void multiThreadApplying(KernelBase kernel) throws InterruptedException {
+    List<Future<Void>> futureList = new ArrayList<>();
+    for (int i = 0; i < imageToRead.getHeight(); i++) {
+      final int iClone = i;
 
-					for (int jj = 0; jj < imageToRead.getWidth(); jj++) {
-						applyFilter(jj, ii, rgba, kernel);
-						normalize(rgba);
-						int rgb = PixelRGB.getRGB(rgba);
-						imageToWrite.setRGB(jj, ii, rgb);
-					}
+      Supplier<Void> supplier = new Supplier<Void>() {
+        public int ii = iClone;
 
-					for (ProgressListener listener : listeners) {
-						listener.progressChanged(EProgressState.eApplying);
-					}
+        @Override
+        public Void get() {
+          double[] rgba = new double[4];
 
-					return null;
-				}
-			};
+          for (int jj = 0; jj < imageToRead.getWidth(); jj++) {
+            applyFilter(jj, ii, rgba, kernel);
+            normalize(rgba);
+            int rgb = PixelRGB.getRGB(rgba);
+            imageToWrite.setRGB(jj, ii, rgb);
+          }
 
-			futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
-		}
+          for (ProgressListener listener : listeners) {
+            listener.progressChanged(EProgressState.eApplying);
+          }
 
-		for (Future<Void> future : futureList) {
-			try {
-				future.get();
-			} catch (InterruptedException | ExecutionException e) {
-				threadPool.shutdownNow();
-				throw new InterruptedException();
-			}
+          return null;
+        }
+      };
 
-			if (Thread.interrupted()) {
-				threadPool.shutdownNow();
-				throw new InterruptedException();
-			}
-		}
-	}
+      futureList.add(CompletableFuture.supplyAsync(supplier, threadPool));
+    }
 
-	private void applyFilter(int x, int y, double[] rgba, KernelBase kernel) {
-		for (int i = 0; i < 4; i++) {
-			rgba[i] = 0.0;
-		}
+    for (Future<Void> future : futureList) {
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        threadPool.shutdownNow();
+        throw new InterruptedException();
+      }
 
-		if (kernel.getColorModel() == ColorModel.eRGB) {
-		int rgb = 0;
-		double[] hsvBuf = new double[3];
-		double[] rgbBuf = new double[4];
+      if (Thread.interrupted()) {
+        threadPool.shutdownNow();
+        throw new InterruptedException();
+      }
+    }
+  }
 
-		for (int kernelY = kernel.begin(1); kernelY <= kernel.end(1); kernelY++) {
-			for (int kernelX = kernel.begin(0); kernelX <= kernel.end(0); kernelX++) {
-				rgb = getRgb(x + kernelX, y + kernelY);
+  private void applyFilter(int x, int y, double[] rgba, KernelBase kernel) {
+    for (int i = 0; i < 4; i++) {
+      rgba[i] = 0.0;
+    }
 
-				if (kernel.isGrayscale()) {
-					PixelHSV.getHSV(rgb, hsvBuf);
-					hsvBuf[1] = 0.0;
-					PixelHSV.getRGB(hsvBuf, rgbBuf);
-					rgbBuf[3] = (double) ((rgb >> 24) & 255);
-				} else {
-					rgbBuf[2] = (double) ((rgb >> 0) & 255);
-					rgbBuf[1] = (double) ((rgb >> 8) & 255);
-					rgbBuf[0] = (double) ((rgb >> 16) & 255);
-					rgbBuf[3] = (double) ((rgb >> 24) & 255);
-				}
+    if (kernel.getColorModel() == ColorModel.eRGB) {
+      int rgb = 0;
+      double[] hsvBuf = new double[3];
+      double[] rgbBuf = new double[4];
 
-				
-				for (int i = 0; i < 4; i++) {
-					rgba[i] += rgbBuf[i] * kernel.getValue(kernelX, kernelY);
-				}
-			}
-		}
+      for (int kernelY = kernel.begin(1); kernelY <= kernel.end(1); kernelY++) {
+        for (int kernelX = kernel.begin(0); kernelX <= kernel.end(0); kernelX++) {
+          rgb = getRgb(x + kernelX, y + kernelY);
 
-		if (kernel.isNormalize()) {
-			for (int i = 0; i < 4; i++) {
-				rgba[i] /= kernel.getSumm();
-			}
-		}
-		
-//			System.out.println(rgba[0] + " " + rgba[1] + " " + rgba[2] + " " + rgba[3]);
-//			System.exit(0);
-			
-		} else if (kernel.getColorModel() == ColorModel.eLAB) {
-			int rgb = 0;
-			double[] lab = new double[3];
-			double[] resultLab = new double[3];
+          if (kernel.isGrayscale()) {
+            PixelHSV.getHSV(rgb, hsvBuf);
+            hsvBuf[1] = 0.0;
+            PixelHSV.getRGB(hsvBuf, rgbBuf);
+            rgbBuf[3] = (double) ((rgb >> 24) & 255);
+          } else {
+            rgbBuf[2] = (double) ((rgb >> 0) & 255);
+            rgbBuf[1] = (double) ((rgb >> 8) & 255);
+            rgbBuf[0] = (double) ((rgb >> 16) & 255);
+            rgbBuf[3] = (double) ((rgb >> 24) & 255);
+          }
 
-			for (int kernelY = kernel.begin(1); kernelY <= kernel.end(1); kernelY++) {
-				for (int kernelX = kernel.begin(0); kernelX <= kernel.end(0); kernelX++) {
-					rgb = getRgb(x + kernelX, y + kernelY);
-					PixelCIELAB.getLAB(rgb, lab);
+          for (int i = 0; i < 4; i++) {
+            rgba[i] += rgbBuf[i] * kernel.getValue(kernelX, kernelY);
+          }
+        }
+      }
 
-					resultLab[0] += lab[0] * kernel.getValue(kernelX, kernelY);
-				}
-			}
+      if (kernel.isNormalize()) {
+        for (int i = 0; i < 4; i++) {
+          rgba[i] /= kernel.getSumm();
+        }
+      }
 
-			if (kernel.isNormalize()) {
-				resultLab[0] /= kernel.getSumm();
-			}
-			
-			rgb = getRgb(x, y);
-			PixelCIELAB.getLAB(rgb, lab);
-			resultLab[1] = lab[1];
-			resultLab[2] = lab[2];
+      // System.out.println(rgba[0] + " " + rgba[1] + " " + rgba[2] + " " + rgba[3]);
+      // System.exit(0);
 
-			PixelCIELAB.getRGB(resultLab, rgba);
-			rgba[3] = (double) ((rgb >> 24) & 255);
+    } else if (kernel.getColorModel() == ColorModel.eLAB) {
+      int rgb = 0;
+      double[] lab = new double[3];
+      double[] resultLab = new double[3];
 
-		} else {
-			int rgb = getRgb(x, y);
+      for (int kernelY = kernel.begin(1); kernelY <= kernel.end(1); kernelY++) {
+        for (int kernelX = kernel.begin(0); kernelX <= kernel.end(0); kernelX++) {
+          rgb = getRgb(x + kernelX, y + kernelY);
+          PixelCIELAB.getLAB(rgb, lab);
 
-			rgba[0] = (double) ((rgb >> 0) & 0xFF);
-			rgba[1] = (double) ((rgb >> 8) & 0xFF);
-			rgba[2] = (double) ((rgb >> 16) & 0xFF);
-			rgba[3] = (double) ((rgb >> 24) & 0xFF);
-		}
-	}
+          resultLab[0] += lab[0] * kernel.getValue(kernelX, kernelY);
+        }
+      }
 
-	private int getRgb(int x, int y) {
-		x = x < 0 ? 0 : x;
-		x = x >= imageTemp.getWidth() ? imageTemp.getWidth() - 1 : x;
+      if (kernel.isNormalize()) {
+        resultLab[0] /= kernel.getSumm();
+      }
 
-		y = y < 0 ? 0 : y;
-		y = y >= imageTemp.getHeight() ? imageTemp.getHeight() - 1 : y;
+      rgb = getRgb(x, y);
+      PixelCIELAB.getLAB(rgb, lab);
+      resultLab[1] = lab[1];
+      resultLab[2] = lab[2];
 
-		return imageTemp.getRGB(x, y);
-	}
+      PixelCIELAB.getRGB(resultLab, rgba);
+      rgba[3] = (double) ((rgb >> 24) & 255);
 
-	private synchronized void addNormalizedValue(double val) {
-		if (val < rgbMin) {
-			rgbMin = val;
-		}
-		if (val > rgbMax) {
-			rgbMax = val;
-		}
-	}
+    } else {
+      int rgb = getRgb(x, y);
+
+      rgba[0] = (double) ((rgb >> 0) & 0xFF);
+      rgba[1] = (double) ((rgb >> 8) & 0xFF);
+      rgba[2] = (double) ((rgb >> 16) & 0xFF);
+      rgba[3] = (double) ((rgb >> 24) & 0xFF);
+    }
+  }
+
+  private int getRgb(int x, int y) {
+    x = x < 0 ? 0 : x;
+    x = x >= imageTemp.getWidth() ? imageTemp.getWidth() - 1 : x;
+
+    y = y < 0 ? 0 : y;
+    y = y >= imageTemp.getHeight() ? imageTemp.getHeight() - 1 : y;
+
+    return imageTemp.getRGB(x, y);
+  }
+
+  private synchronized void addNormalizedValue(double val) {
+    if (val < rgbMin) {
+      rgbMin = val;
+    }
+    if (val > rgbMax) {
+      rgbMax = val;
+    }
+  }
 }

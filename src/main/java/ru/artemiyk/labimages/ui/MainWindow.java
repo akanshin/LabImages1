@@ -28,393 +28,385 @@ import ru.artemiyk.labimages.action.segmentation.MeanShiftAction;
 import ru.artemiyk.labimages.action.segmentation.SplitAndMergeAction;
 
 public class MainWindow extends JFrame {
-	/**
-	 * Default serial verstion uid
-	 */
-	private static final long serialVersionUID = 1L;
+  /**
+   * Default serial verstion uid
+   */
+  private static final long serialVersionUID = 1L;
 
-	private int width;
-	private int height;
-	private int displayWidth;
-	private int displayHeight;
+  private int width;
+  private int height;
+  private int displayWidth;
+  private int displayHeight;
 
-	private ImagePanel imagePanel;
-	private StatusBar statusBar;
+  private ImagePanel imagePanel;
+  private StatusBar statusBar;
 
-	private Color toolBarColor = Color.WHITE;
-	private JToolBar toolBar;
-	private JButton openButton;
-	private JButton saveButton;
-	private JButton defaultViewButton;
-	private JButton expandButton;
-	private JButton showMassiveButton;
-	private JButton showHistButton;
-	private JButton changeHSVButton;
-	private JButton gaussianBlurButton;
-	private JButton gaborFilterButton;
-	private JButton sobelFilterButton;
-	private JButton setDefaultImageButton;
-	private JButton selectAllButton;
-	private JButton splitAndMergeButton;
-	private JButton meanShiftButton;
-	private JButton questionButton;
+  private Color toolBarColor = Color.WHITE;
+  private JToolBar toolBar;
+  private JButton openButton;
+  private JButton saveButton;
+  private JButton defaultViewButton;
+  private JButton expandButton;
+  private JButton showMassiveButton;
+  private JButton showHistButton;
+  private JButton changeHSVButton;
+  private JButton gaussianBlurButton;
+  private JButton gaborFilterButton;
+  private JButton sobelFilterButton;
+  private JButton setDefaultImageButton;
+  private JButton selectAllButton;
+  private JButton splitAndMergeButton;
+  private JButton meanShiftButton;
+  private JButton questionButton;
 
-	private File lastOpennedFile;
+  private File lastOpennedFile;
 
-	private static String questionString = "Click left mouse button to select pixel\n"
-			+ "Press left button and drag mouse to select area\n" + "Click right button to clear selection\n"
-			+ "Press wheel and drag mouse to move image\n" + "Rotate mouse wheel to zoom\n\n" + "Good luck! :)";
+  private static String questionString = "Click left mouse button to select pixel\n"
+      + "Press left button and drag mouse to select area\n" + "Click right button to clear selection\n"
+      + "Press wheel and drag mouse to move image\n" + "Rotate mouse wheel to zoom\n\n" + "Good luck! :)";
 
-	private final JFileChooser fileChooser;
+  private final JFileChooser fileChooser;
 
-	public MainWindow(String windowName, int width, int height) {
-		super(windowName);
+  public MainWindow(String windowName, int width, int height) {
+    super(windowName);
 
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		this.width = width;
-		this.height = height;
+    this.width = width;
+    this.height = height;
 
-		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		displayWidth = gd.getDisplayMode().getWidth();
-		displayHeight = gd.getDisplayMode().getHeight();
-		this.setBounds(displayWidth / 2 - this.width / 2, displayHeight / 2 - this.height / 2, this.width, this.height);
+    GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+    displayWidth = gd.getDisplayMode().getWidth();
+    displayHeight = gd.getDisplayMode().getHeight();
+    this.setBounds(displayWidth / 2 - this.width / 2, displayHeight / 2 - this.height / 2, this.width, this.height);
 
-		this.buildToolBar();
-		this.buildImagePanel();
+    this.buildToolBar();
+    this.buildImagePanel();
 
-		statusBar = new StatusBar();
-		this.getContentPane().add(statusBar, BorderLayout.SOUTH);
+    statusBar = new StatusBar();
+    this.getContentPane().add(statusBar, BorderLayout.SOUTH);
 
-		fileChooser = new JFileChooser();
-		fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("JPEG", "jpg", "jpeg"));
-		fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("PNG", "png"));
-		fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("GIF", "gif"));
-	}
+    fileChooser = new JFileChooser();
+    fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("JPEG", "jpg", "jpeg"));
+    fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("PNG", "png"));
+    fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("GIF", "gif"));
+  }
 
-	public void buildImagePanel() {
-		imagePanel = new ImagePanel();
-		imagePanel.setBorder(BorderFactory.createBevelBorder(1));
-		this.getContentPane().add(imagePanel, BorderLayout.CENTER);
-	}
+  public void buildImagePanel() {
+    imagePanel = new ImagePanel();
+    imagePanel.setBorder(BorderFactory.createBevelBorder(1));
+    this.getContentPane().add(imagePanel, BorderLayout.CENTER);
+  }
 
-	public ImagePanel getImagePanel() {
-		return imagePanel;
-	}
+  public ImagePanel getImagePanel() {
+    return imagePanel;
+  }
 
-	private void buildToolBar() {
-		toolBar = new JToolBar();
-		toolBar.setFloatable(false);
-		toolBar.setBackground(toolBarColor);
+  private void buildToolBar() {
+    toolBar = new JToolBar();
+    toolBar.setFloatable(false);
+    toolBar.setBackground(toolBarColor);
 
-		openButton = new JButton();
-		openButton.setBackground(toolBarColor);
-		openButton.setToolTipText("Open image");
-		toolBar.add(openButton);
-		openButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("open.png")));
-		openButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				onOpen();
-			}
-		});
+    openButton = new JButton();
+    openButton.setBackground(toolBarColor);
+    openButton.setToolTipText("Open image");
+    toolBar.add(openButton);
+    openButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("open.png")));
+    openButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        onOpen();
+      }
+    });
 
-		saveButton = new JButton();
-		saveButton.setBackground(toolBarColor);
-		saveButton.setToolTipText("Save image");
-		toolBar.add(saveButton);
-		saveButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("save.png")));
-		saveButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				onSave();
-			}
-		});
+    saveButton = new JButton();
+    saveButton.setBackground(toolBarColor);
+    saveButton.setToolTipText("Save image");
+    toolBar.add(saveButton);
+    saveButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("save.png")));
+    saveButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        onSave();
+      }
+    });
 
-		toolBar.addSeparator();
+    toolBar.addSeparator();
 
-		defaultViewButton = new JButton();
-		defaultViewButton.setBackground(toolBarColor);
-		defaultViewButton.setToolTipText("Default scale");
-		toolBar.add(defaultViewButton);
-		defaultViewButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("default_view.png")));
-		defaultViewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.setDefaultView();
-			}
-		});
+    defaultViewButton = new JButton();
+    defaultViewButton.setBackground(toolBarColor);
+    defaultViewButton.setToolTipText("Default scale");
+    toolBar.add(defaultViewButton);
+    defaultViewButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("default_view.png")));
+    defaultViewButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.setDefaultView();
+      }
+    });
 
-		expandButton = new JButton();
-		expandButton.setBackground(toolBarColor);
-		expandButton.setToolTipText("Scale to window");
-		toolBar.add(expandButton);
-		expandButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("expand.png")));
-		expandButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.setAllView();
-			}
-		});
+    expandButton = new JButton();
+    expandButton.setBackground(toolBarColor);
+    expandButton.setToolTipText("Scale to window");
+    toolBar.add(expandButton);
+    expandButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("expand.png")));
+    expandButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.setAllView();
+      }
+    });
 
-		toolBar.addSeparator();
+    toolBar.addSeparator();
 
-		selectAllButton = new JButton();
-		selectAllButton.setBackground(toolBarColor);
-		selectAllButton.setToolTipText("Select all");
-		toolBar.add(selectAllButton);
-		selectAllButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("select.png")));
-		selectAllButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.selectAll();
-			}
-		});
+    selectAllButton = new JButton();
+    selectAllButton.setBackground(toolBarColor);
+    selectAllButton.setToolTipText("Select all");
+    toolBar.add(selectAllButton);
+    selectAllButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("select.png")));
+    selectAllButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.selectAll();
+      }
+    });
 
-		showMassiveButton = new JButton();
-		showMassiveButton.setBackground(toolBarColor);
-		showMassiveButton.setToolTipText("Show massive");
-		toolBar.add(showMassiveButton);
-		showMassiveButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("show_rgb.png")));
-		showMassiveButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.showMassive();
-			}
-		});
+    showMassiveButton = new JButton();
+    showMassiveButton.setBackground(toolBarColor);
+    showMassiveButton.setToolTipText("Show massive");
+    toolBar.add(showMassiveButton);
+    showMassiveButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("show_rgb.png")));
+    showMassiveButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.showMassive();
+      }
+    });
 
-		showHistButton = new JButton();
-		showHistButton.setBackground(toolBarColor);
-		showHistButton.setToolTipText("Show histogram");
-		toolBar.add(showHistButton);
-		showHistButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hist.png")));
-		showHistButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.showHist();
-			}
-		});
+    showHistButton = new JButton();
+    showHistButton.setBackground(toolBarColor);
+    showHistButton.setToolTipText("Show histogram");
+    toolBar.add(showHistButton);
+    showHistButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hist.png")));
+    showHistButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.showHist();
+      }
+    });
 
-		toolBar.addSeparator();
+    toolBar.addSeparator();
 
-		changeHSVButton = new JButton();
-		changeHSVButton.setBackground(toolBarColor);
-		changeHSVButton.setToolTipText("Change HSV");
-		toolBar.add(changeHSVButton);
-		changeHSVButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hsv.png")));
-		changeHSVButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				HSVTranformatorDialog hsvDialog = new HSVTranformatorDialog(imagePanel.getImage());
-				hsvDialog.setVisible(true);
-			}
-		});
+    changeHSVButton = new JButton();
+    changeHSVButton.setBackground(toolBarColor);
+    changeHSVButton.setToolTipText("Change HSV");
+    toolBar.add(changeHSVButton);
+    changeHSVButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("hsv.png")));
+    changeHSVButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        HSVTranformatorDialog hsvDialog = new HSVTranformatorDialog(imagePanel.getImage());
+        hsvDialog.setVisible(true);
+      }
+    });
 
-		gaussianBlurButton = new JButton();
-		gaussianBlurButton.setBackground(toolBarColor);
-		gaussianBlurButton.setToolTipText("Gaussian blur");
-		toolBar.add(gaussianBlurButton);
-		gaussianBlurButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gaussian_blur.png")));
-		gaussianBlurButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.produceAction(new FilterAction(new GaussianBlurDialog()));
-			}
-		});
+    gaussianBlurButton = new JButton();
+    gaussianBlurButton.setBackground(toolBarColor);
+    gaussianBlurButton.setToolTipText("Gaussian blur");
+    toolBar.add(gaussianBlurButton);
+    gaussianBlurButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gaussian_blur.png")));
+    gaussianBlurButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.produceAction(new FilterAction(new GaussianBlurDialog()));
+      }
+    });
 
-		gaborFilterButton = new JButton();
-		gaborFilterButton.setBackground(toolBarColor);
-		gaborFilterButton.setToolTipText("Gabor filter");
-		toolBar.add(gaborFilterButton);
-		gaborFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gabor_filter.png")));
-		gaborFilterButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.produceAction(new FilterAction(new GaborFilterDialog()));
-			}
-		});
+    gaborFilterButton = new JButton();
+    gaborFilterButton.setBackground(toolBarColor);
+    gaborFilterButton.setToolTipText("Gabor filter");
+    toolBar.add(gaborFilterButton);
+    gaborFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("gabor_filter.png")));
+    gaborFilterButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.produceAction(new FilterAction(new GaborFilterDialog()));
+      }
+    });
 
-		sobelFilterButton = new JButton();
-		sobelFilterButton.setBackground(toolBarColor);
-		sobelFilterButton.setToolTipText("Sobel filter");
-		toolBar.add(sobelFilterButton);
-		sobelFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("sobel_filter.png")));
-		sobelFilterButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.produceAction(new FilterAction(new SobelFilterDialog()));
-			}
-		});
+    sobelFilterButton = new JButton();
+    sobelFilterButton.setBackground(toolBarColor);
+    sobelFilterButton.setToolTipText("Sobel filter");
+    toolBar.add(sobelFilterButton);
+    sobelFilterButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("sobel_filter.png")));
+    sobelFilterButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.produceAction(new FilterAction(new SobelFilterDialog()));
+      }
+    });
 
-		setDefaultImageButton = new JButton();
-		setDefaultImageButton.setBackground(toolBarColor);
-		setDefaultImageButton.setToolTipText("Default HSV");
-		toolBar.add(setDefaultImageButton);
-		setDefaultImageButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("set_default.png")));
-		setDefaultImageButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				imagePanel.setDefaultImage();
-			}
-		});
+    splitAndMergeButton = new JButton();
+    splitAndMergeButton.setBackground(toolBarColor);
+    splitAndMergeButton.setToolTipText("Split and Merge");
+    toolBar.add(splitAndMergeButton);
+    splitAndMergeButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("split_and_merge.png")));
+    splitAndMergeButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        Action action = new SplitAndMergeAction();
+        action.addProgressListener(new ProgressListener() {
+          @Override
+          public void progressChanged(EProgressState progressState) {
+            inc();
+          }
 
-		toolBar.addSeparator();
-		
-		splitAndMergeButton = new JButton();
-		splitAndMergeButton.setBackground(toolBarColor);
-		splitAndMergeButton.setToolTipText("Split and Merge");
-		toolBar.add(splitAndMergeButton);
-		splitAndMergeButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("split_and_merge.png")));
-		splitAndMergeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				Action action = new SplitAndMergeAction();
-				action.addProgressListener(new ProgressListener() {
-					@Override
-					public void progressChanged(EProgressState progressState) {
-						inc();
-					}
+          private synchronized void inc() {
+            int val = statusBar.getProgressBar().getValue();
+            if (val >= statusBar.getProgressBar().getMaximum()) {
+              return;
+            }
+            val++;
+            statusBar.getProgressBar().setValue(val);
+          }
 
-					private synchronized void inc() {
-						int val = statusBar.getProgressBar().getValue();
-						if (val >= statusBar.getProgressBar().getMaximum()) {
-							return;
-						}
-						val++;
-						statusBar.getProgressBar().setValue(val);
-					}
-					
-					@Override
-					public void rangeChanged(int minimum, int maximum) {
-						statusBar.getProgressBar().setMinimum(minimum);
-						statusBar.getProgressBar().setMaximum(maximum);
-						statusBar.getProgressBar().setValue(minimum);
-					}
+          @Override
+          public void rangeChanged(int minimum, int maximum) {
+            statusBar.getProgressBar().setMinimum(minimum);
+            statusBar.getProgressBar().setMaximum(maximum);
+            statusBar.getProgressBar().setValue(minimum);
+          }
 
-					@Override
-					public void showProgress(boolean show) {
-						splitAndMergeButton.setEnabled(!show);
-						statusBar.getProgressBar().setVisible(show);
-						if (!show) {
-							imagePanel.repaint();
-						}
-					}
-				});
-				
-				imagePanel.produceAction(action);
-			}
-		});
-		
-		meanShiftButton = new JButton();
-		meanShiftButton.setBackground(toolBarColor);
-		meanShiftButton.setToolTipText("Mean shift");
-		toolBar.add(meanShiftButton);
-		meanShiftButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("mean_shift.png")));
-		meanShiftButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				Action action = new MeanShiftAction();
-				action.addProgressListener(new ProgressListener() {
-					@Override
-					public void progressChanged(EProgressState progressState) {
-						inc();
-					}
+          @Override
+          public void showProgress(boolean show) {
+            splitAndMergeButton.setEnabled(!show);
+            statusBar.getProgressBar().setVisible(show);
+            if (!show) {
+              imagePanel.repaint();
+            }
+          }
+        });
 
-					private synchronized void inc() {
-						int val = statusBar.getProgressBar().getValue();
-						if (val >= statusBar.getProgressBar().getMaximum()) {
-							return;
-						}
-						val++;
-						statusBar.getProgressBar().setValue(val);
-					}
-					
-					@Override
-					public void rangeChanged(int minimum, int maximum) {
-						statusBar.getProgressBar().setMinimum(minimum);
-						statusBar.getProgressBar().setMaximum(maximum);
-						statusBar.getProgressBar().setValue(minimum);
-					}
+        imagePanel.produceAction(action);
+      }
+    });
 
-					@Override
-					public void showProgress(boolean show) {
-						meanShiftButton.setEnabled(!show);
-						statusBar.getProgressBar().setVisible(show);
-						if (!show) {
-							imagePanel.repaint();
-						}
-					}
-				});
-				
-				imagePanel.produceAction(action);
-			}
-		});
-		
-		toolBar.addSeparator();
+    meanShiftButton = new JButton();
+    meanShiftButton.setBackground(toolBarColor);
+    meanShiftButton.setToolTipText("Mean shift");
+    toolBar.add(meanShiftButton);
+    meanShiftButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("mean_shift.png")));
+    meanShiftButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        Action action = new MeanShiftAction();
+        action.addProgressListener(new ProgressListener() {
+          @Override
+          public void progressChanged(EProgressState progressState) {
+            inc();
+          }
 
-		questionButton = new JButton();
-		questionButton.setBackground(toolBarColor);
-		questionButton.setToolTipText("If you don't know what to do, click!");
-		toolBar.add(questionButton);
-		questionButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("question.png")));
-		questionButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				JOptionPane.showMessageDialog(MainWindow.this, questionString);
-			}
-		});
+          private synchronized void inc() {
+            int val = statusBar.getProgressBar().getValue();
+            if (val >= statusBar.getProgressBar().getMaximum()) {
+              return;
+            }
+            val++;
+            statusBar.getProgressBar().setValue(val);
+          }
 
-		Container contentPane = this.getContentPane();
-		contentPane.add(toolBar, BorderLayout.NORTH);
-	}
+          @Override
+          public void rangeChanged(int minimum, int maximum) {
+            statusBar.getProgressBar().setMinimum(minimum);
+            statusBar.getProgressBar().setMaximum(maximum);
+            statusBar.getProgressBar().setValue(minimum);
+          }
 
-	private void onOpen() {
-		int returnVal = fileChooser.showOpenDialog(this);
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			imagePanel.loadImage(lastOpennedFile = fileChooser.getSelectedFile());
-		}
-	}
+          @Override
+          public void showProgress(boolean show) {
+            meanShiftButton.setEnabled(!show);
+            statusBar.getProgressBar().setVisible(show);
+            if (!show) {
+              imagePanel.repaint();
+            }
+          }
+        });
 
-	private void onSave() {
-		if (lastOpennedFile != null) {
-			fileChooser.setSelectedFile(lastOpennedFile);
-		}
-		
-		int returnVal = fileChooser.showSaveDialog(this);
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			FileFilter filter = fileChooser.getFileFilter();
-			String description = filter.getDescription();
-			String extension;
-			if (description.equals("JPEG"))
-			{
-				extension = "jpg";
-			}
-			else if (description.equals("PNG"))
-			{
-				extension = "png";
-			}
-			else if (description.equals("GIF"))
-			{
-				extension = "gif";
-			}
-			else {
-				extension = "png";
-			}
+        imagePanel.produceAction(action);
+      }
+    });
 
-			lastOpennedFile = fileChooser.getSelectedFile();
-			if (!lastOpennedFile.getPath().endsWith("." + extension)) {
-				String path = lastOpennedFile.getAbsolutePath();
-				path += "." + extension;
-				lastOpennedFile = new File(path);
-			}
-			
-			if (!lastOpennedFile.exists()) {
-				try {
-					lastOpennedFile.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			imagePanel.saveImage(extension, lastOpennedFile);
-		}
-	}
+    setDefaultImageButton = new JButton();
+    setDefaultImageButton.setBackground(toolBarColor);
+    setDefaultImageButton.setToolTipText("Default HSV");
+    toolBar.add(setDefaultImageButton);
+    setDefaultImageButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("set_default.png")));
+    setDefaultImageButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        imagePanel.setDefaultImage();
+      }
+    });
 
-	public void showMessage(String message) {
-		JOptionPane.showMessageDialog(this, message, "Message", JOptionPane.ERROR_MESSAGE);
-	}
+    toolBar.addSeparator();
 
-	public StatusBar getStatusBar() {
-		return statusBar;
-	}
+    questionButton = new JButton();
+    questionButton.setBackground(toolBarColor);
+    questionButton.setToolTipText("If you don't know what to do, click!");
+    toolBar.add(questionButton);
+    questionButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("question.png")));
+    questionButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+        JOptionPane.showMessageDialog(MainWindow.this, questionString);
+      }
+    });
 
-	public void setEnableSelectionButtons(boolean enable) {
-		showMassiveButton.setEnabled(enable);
-		showHistButton.setEnabled(enable);
-	}
+    Container contentPane = this.getContentPane();
+    contentPane.add(toolBar, BorderLayout.NORTH);
+  }
+
+  private void onOpen() {
+    int returnVal = fileChooser.showOpenDialog(this);
+    if (returnVal == JFileChooser.APPROVE_OPTION) {
+      imagePanel.loadImage(lastOpennedFile = fileChooser.getSelectedFile());
+    }
+  }
+
+  private void onSave() {
+    if (lastOpennedFile != null) {
+      fileChooser.setSelectedFile(lastOpennedFile);
+    }
+
+    int returnVal = fileChooser.showSaveDialog(this);
+    if (returnVal == JFileChooser.APPROVE_OPTION) {
+      FileFilter filter = fileChooser.getFileFilter();
+      String description = filter.getDescription();
+      String extension;
+      if (description.equals("JPEG")) {
+        extension = "jpg";
+      } else if (description.equals("PNG")) {
+        extension = "png";
+      } else if (description.equals("GIF")) {
+        extension = "gif";
+      } else {
+        extension = "png";
+      }
+
+      lastOpennedFile = fileChooser.getSelectedFile();
+      if (!lastOpennedFile.getPath().endsWith("." + extension)) {
+        String path = lastOpennedFile.getAbsolutePath();
+        path += "." + extension;
+        lastOpennedFile = new File(path);
+      }
+
+      if (!lastOpennedFile.exists()) {
+        try {
+          lastOpennedFile.createNewFile();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      imagePanel.saveImage(extension, lastOpennedFile);
+    }
+  }
+
+  public void showMessage(String message) {
+    JOptionPane.showMessageDialog(this, message, "Message", JOptionPane.ERROR_MESSAGE);
+  }
+
+  public StatusBar getStatusBar() {
+    return statusBar;
+  }
+
+  public void setEnableSelectionButtons(boolean enable) {
+    showMassiveButton.setEnabled(enable);
+    showHistButton.setEnabled(enable);
+  }
 }
